@@ -52,11 +52,11 @@ export default async function JoinGroupPage({ params }: { params: Promise<{ id: 
     )
   }
 
-  // Auto-add them as pending
+  // Auto-approve them into the group
   await supabase.from('friend_group_members').insert({
     group_id: id,
     user_id: user.id,
-    status: 'pending',
+    status: 'approved',
     vote_count: 0,
   })
 

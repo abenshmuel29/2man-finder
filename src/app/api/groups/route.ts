@@ -31,11 +31,10 @@ export async function POST(request: Request) {
 
     if ((count ?? 0) >= 20) return NextResponse.json({ error: 'Group is full (20 members max)' }, { status: 400 })
 
-    // Add as pending
     const { error } = await supabase.from('friend_group_members').upsert({
       group_id,
       user_id: user.id,
-      status: 'pending',
+      status: 'approved',
       vote_count: 0,
     })
 
