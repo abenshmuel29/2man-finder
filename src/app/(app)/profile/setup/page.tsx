@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { NEIGHBORHOODS, BODY_TYPES, type Gender, type Neighborhood, type BodyType } from '@/lib/types'
@@ -8,7 +8,7 @@ import { Upload, X } from 'lucide-react'
 
 const STEPS = ['Basic Info', 'Stats', 'About You', 'Social & Location', 'Photos']
 
-export default function ProfileSetupPage() {
+function ProfileSetupContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const joinGroupId = searchParams.get('join')
@@ -289,4 +289,8 @@ export default function ProfileSetupPage() {
       </div>
     </div>
   )
+}
+
+export default function ProfileSetupPage() {
+  return <Suspense><ProfileSetupContent /></Suspense>
 }
