@@ -2,8 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
-import { CheckCircle, Clock, UserPlus } from 'lucide-react'
+import { CheckCircle, Clock, UserPlus, Copy, Check } from 'lucide-react'
 
 interface Member {
   id: string
@@ -30,8 +29,14 @@ export default function GroupDetailClient({
   const router = useRouter()
   const [votedIds, setVotedIds] = useState(new Set(myVotedIds))
   const [joining, setJoining] = useState(false)
-  const [email, setEmail] = useState('')
-  const [inviteMsg, setInviteMsg] = useState('')
+  const [copied, setCopied] = useState(false)
+
+  function copyInviteLink() {
+    const link = `${window.location.origin}/join/${group.id}`
+    navigator.clipboard.writeText(link)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
 
   const approved = members.filter(m => m.status === 'approved')
   const pending = members.filter(m => m.status === 'pending')
@@ -58,32 +63,7 @@ export default function GroupDetailClient({
     }
   }
 
-  async function handleInvite(e: React.FormEvent) {
-    e.preventDefault()
-    setInviteMsg('')
-    const supabase = createClient()
-    const { data: targetProfile } = await supabase
-      .from('profiles')
-      .select('id, gender')
-      .eq('email', email.toLowerCase().trim())
-      .single()
-
-    if (!targetProfile) { setInviteMsg('No user found with that email.'); return }
-    if (targetProfile.gender !== group.gender) { setInviteMsg(`This is a ${group.gender} group. You can only invite ${group.gender}s.`); return }
-
-    const { error } = await supabase.from('friend_group_members').insert({
-      group_id: group.id,
-      user_id: targetProfile.id,
-      status: 'pending',
-      vote_count: 0,
-      invited_by: userId,
-    })
-    if (error) setInviteMsg(error.message)
-    else { setInviteMsg('Invite sent! They need 1/3 of members to approve.'); setEmail('') }
-    router.refresh()
-  }
-
-  return (
+return (
     <div className="flex flex-col gap-5">
       {/* Join / status */}
       {!isMember && !isPending && (
@@ -164,15 +144,12 @@ export default function GroupDetailClient({
 
       {/* Invite section (members only) */}
       {isMember && approvedCount < 20 && (
-        <div className="card p-5 flex flex-col gap-4">
-          <h2 className="font-semibold text-white">Invite Someone</h2>
-          <p className="text-xs text-gray-500">Enter their email address — they must already have an account</p>
-          <form onSubmit={handleInvite} className="flex flex-col gap-3">
-            <input type="email" className="input-field" value={email} onChange={e => setEmail(e.target.value)}
-              placeholder="friend@email.com" required />
-            <button type="submit" className="btn-secondary">Send Invite</button>
-          </form>
-          {inviteMsg && <p className="text-sm text-yellow-400">{inviteMsg}</p>}
+        <div className="card p-5 flex flex-col gap-3">
+          <h2 className="font-semibold text-white">Invite Friends</h2>
+          <p className="text-xs text-gray-500">Share this link — they'll sign up and join your group</p>
+          <button onClick={copyInviteLink} className="btn-primary flex items-center justify-center gap-2">
+            {copied ? <><Check size={16} /> Copied!</> : <><Copy size={16} /> Copy Invite Link</>}
+          </button>
         </div>
       )}
     </div>

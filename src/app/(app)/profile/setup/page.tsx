@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { NEIGHBORHOODS, BODY_TYPES, type Gender, type Neighborhood, type BodyType } from '@/lib/types'
 import { Upload, X } from 'lucide-react'
@@ -10,6 +10,8 @@ const STEPS = ['Basic Info', 'Stats', 'About You', 'Social & Location', 'Photos'
 
 export default function ProfileSetupPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const joinGroupId = searchParams.get('join')
   const [step, setStep] = useState(0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -83,7 +85,7 @@ export default function ProfileSetupPage() {
       neighborhood, photos, profile_complete: true, updated_at: new Date().toISOString(),
     })
     if (error) { setError(error.message); setLoading(false) }
-    else router.push('/discover')
+    else router.push(joinGroupId ? `/join/${joinGroupId}` : '/discover')
   }
 
   function TagInput({ label, value, onChange, list, onAdd, onRemove }: {
