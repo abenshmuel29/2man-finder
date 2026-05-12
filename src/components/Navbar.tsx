@@ -2,28 +2,67 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Compass, Heart, LogOut, User, Search, MessageSquare } from 'lucide-react'
 
 const links = [
-  { href: '/discover', label: 'Discover', icon: Compass, notif: null as null | 'dates' | 'friends' | 'messages' },
-  { href: '/search', label: 'Search', icon: Search, notif: null },
-  { href: '/proposals', label: '2Mans', icon: Heart, notif: 'dates' as const },
-  { href: '/messages', label: 'Messages', icon: MessageSquare, notif: 'messages' as const },
-  { href: '/profile', label: 'Profile', icon: User, notif: null },
+  { href: '/discover', label: 'Discover', icon: Compass, notifKey: null as null | string },
+  { href: '/search', label: 'Search', icon: Search, notifKey: null },
+  { href: '/proposals', label: '2Mans', icon: Heart, notifKey: 'dates' },
+  { href: '/messages', label: 'Messages', icon: MessageSquare, notifKey: 'messages' },
+  { href: '/profile', label: 'Profile', icon: User, notifKey: null },
 ]
+
+type Counts = { dates: number; messages: number }
+
+function getSeenCounts(): Counts {
+  if (typeof window === 'undefined') return { dates: 0, messages: 0 }
+  return {
+    dates: parseInt(localStorage.getItem('seen_dates') ?? '0'),
+    messages: parseInt(localStorage.getItem('seen_messages') ?? '0'),
+  }
+}
+
+function saveSeenCount(key: keyof Counts, value: number) {
+  if (typeof window === 'undefined') return
+  localStorage.setItem(`seen_${key}`, String(value))
+}
 
 export default function Navbar() {
   const pathname = usePathname()
   const router = useRouter()
-  const [notifs, setNotifs] = useState({ dates: 0, friends: 0, messages: 0 })
+  const [notifs, setNotifs] = useState<Counts>({ dates: 0, messages: 0 })
+  const [seen, setSeen] = useState<Counts>({ dates: 0, messages: 0 })
+  const seenRef = useRef(seen)
+  seenRef.current = seen
 
+  // Fetch notification counts whenever pathname changes
   useEffect(() => {
     fetch('/api/notifications')
       .then(r => r.json())
-      .then(data => setNotifs(data))
+      .then((data: Counts) => setNotifs(data))
       .catch(() => {})
+  }, [pathname])
+
+  // When landing on a notif page, mark those as seen
+  useEffect(() => {
+    setSeen(getSeenCounts())
+
+    if (pathname === '/proposals') {
+      setNotifs(prev => {
+        saveSeenCount('dates', prev.dates)
+        setSeen(s => ({ ...s, dates: prev.dates }))
+        return prev
+      })
+    }
+    if (pathname === '/messages') {
+      setNotifs(prev => {
+        saveSeenCount('messages', prev.messages)
+        setSeen(s => ({ ...s, messages: prev.messages }))
+        return prev
+      })
+    }
   }, [pathname])
 
   async function handleLogout() {
@@ -50,10 +89,12 @@ export default function Navbar() {
       {/* Bottom nav */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around px-4 py-3"
         style={{ background: 'rgba(13,13,26,0.95)', backdropFilter: 'blur(12px)', borderTop: '1px solid #2D2D50' }}>
-        {links.map(({ href, label, icon: Icon, notif }) => {
-          const active = pathname === href || (href === '/proposals' && pathname === '/proposals')
-          const count = notif ? notifs[notif as keyof typeof notifs] : 0
-          const showDot = count > 0 && !active
+        {links.map(({ href, label, icon: Icon, notifKey }) => {
+          const active = pathname === href
+          const count = notifKey ? notifs[notifKey as keyof Counts] : 0
+          const seenCount = notifKey ? seen[notifKey as keyof Counts] : 0
+          // Only show dot if count increased since last visit, and we're not currently on that page
+          const showDot = !active && count > seenCount
           return (
             <Link key={href} href={href} className="relative flex flex-col items-center gap-1 transition-colors"
               style={{ color: active ? '#8B5CF6' : '#6B7280' }}>
