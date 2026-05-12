@@ -84,7 +84,6 @@ export default function DatesAndFriendsPage() {
   const [userId, setUserId] = useState<string | null>(null)
   const [proposals, setProposals] = useState<any[]>([])
   const [friendships, setFriendships] = useState<Friendship[]>([])
-  const [confirmedIds, setConfirmedIds] = useState<Set<string>>(new Set())
   const [myLikes, setMyLikes] = useState<InterestRow[]>([])
   const [likesForMe, setLikesForMe] = useState<InterestRow[]>([])
   const [loading, setLoading] = useState(true)
@@ -99,13 +98,12 @@ export default function DatesAndFriendsPage() {
     // Kick off recalculation in background to catch any missed proposals
     fetch('/api/proposals/recalculate', { method: 'POST' })
 
-    const [rawProposalsRes, friendsRes, confirmRes, myLikesRes, likesForMeRes] = await Promise.all([
+    const [rawProposalsRes, friendsRes, myLikesRes, likesForMeRes] = await Promise.all([
       supabase.from('double_date_proposals')
         .select('*')
         .or(`guy1_id.eq.${user.id},guy2_id.eq.${user.id},girl1_id.eq.${user.id},girl2_id.eq.${user.id}`)
         .order('created_at', { ascending: false }),
       fetch('/api/friends').then(r => r.json()),
-      supabase.from('proposal_confirmations').select('proposal_id').eq('user_id', user.id),
       supabase.from('interests').select('from_user_id, to_user_id, profiles!interests_to_user_id_fkey(id, name, age, photos, neighborhood, gender, job)').eq('from_user_id', user.id),
       supabase.from('interests').select('from_user_id, to_user_id, profiles!interests_from_user_id_fkey(id, name, age, photos, neighborhood, gender, job)').eq('to_user_id', user.id),
     ])
@@ -131,7 +129,6 @@ export default function DatesAndFriendsPage() {
 
     setProposals(proposals)
     setFriendships(Array.isArray(friendsRes) ? friendsRes : [])
-    setConfirmedIds(new Set(confirmRes.data?.map((c: { proposal_id: string }) => c.proposal_id) ?? []))
     setMyLikes((myLikesRes.data ?? []).map((r: any) => ({ from_user_id: r.from_user_id, to_user_id: r.to_user_id, profile: r.profiles })))
     setLikesForMe((likesForMeRes.data ?? []).map((r: any) => ({ from_user_id: r.from_user_id, to_user_id: r.to_user_id, profile: r.profiles })))
     setLoading(false)
@@ -193,16 +190,12 @@ export default function DatesAndFriendsPage() {
 
   const myLikedIds = new Set(myLikes.map(l => l.to_user_id))
   const likedMeIds = new Set(likesForMe.map(l => l.from_user_id))
-  const proposalUserIds = new Set(proposals.flatMap(p => [p.guy1_id, p.guy2_id, p.girl1_id, p.girl2_id]))
+  const proposalUserIds = new Set(proposals.flatMap((p: any) => [p.guy1_id, p.guy2_id, p.girl1_id, p.girl2_id]))
 
-  // Outgoing: I liked them
   const waitingOnThem = myLikes.filter(l => !likedMeIds.has(l.to_user_id) && !proposalUserIds.has(l.to_user_id))
   const mutualMatches = myLikes.filter(l => likedMeIds.has(l.to_user_id) && !proposalUserIds.has(l.to_user_id))
-  // Incoming: they liked me, I haven't liked back and haven't passed
   const wantsToRunWith = likesForMe.filter(l => !myLikedIds.has(l.from_user_id))
 
-  const pending = proposals.filter(p => p.status === 'pending')
-  const confirmed = proposals.filter(p => p.status === 'confirmed')
   const incomingFriendRequests = friendships.filter(f => f.status === 'pending' && f.receiver_id === userId)
   const outgoingFriendRequests = friendships.filter(f => f.status === 'pending' && f.requester_id === userId)
   const acceptedFriends = friendships.filter(f => f.status === 'accepted')
@@ -281,21 +274,13 @@ export default function DatesAndFriendsPage() {
             </div>
           )}
 
-          {/* Double date proposals */}
-          {pending.length > 0 && (
+          {/* 2Man confirmed groups */}
+          {proposals.length > 0 && (
             <div className="flex flex-col gap-3">
               <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" /> Double Date Pending ({pending.length})
+                🎉 2Man Ready! ({proposals.length})
               </h2>
-              {pending.map(p => <ProposalCard key={p.id} proposal={p} userId={userId!} hasConfirmed={confirmedIds.has(p.id)} />)}
-            </div>
-          )}
-          {confirmed.length > 0 && (
-            <div className="flex flex-col gap-3">
-              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-                <Heart size={18} className="text-pink-400" /> Confirmed Dates
-              </h2>
-              {confirmed.map(p => <ProposalCard key={p.id} proposal={p} userId={userId!} hasConfirmed={confirmedIds.has(p.id)} />)}
+              {proposals.map((p: any) => <ProposalCard key={p.id} proposal={p} userId={userId!} />)}
             </div>
           )}
 

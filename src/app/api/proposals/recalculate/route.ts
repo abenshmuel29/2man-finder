@@ -41,12 +41,11 @@ export async function POST() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { data: me } = await supabase.from('profiles').select('gender').eq('id', user.id).single()
+  const { data: me } = await supabase.from('profiles').select('gender').eq('id', user.id).maybeSingle()
   if (!me) return NextResponse.json({ created: 0 })
 
   const isGuy = me.gender === 'male'
 
-  // Get all mutual matches for this user (opposite gender)
   const [{ data: myLikes }, { data: likesForMe }] = await Promise.all([
     supabase.from('interests').select('to_user_id').eq('from_user_id', user.id),
     supabase.from('interests').select('from_user_id').eq('to_user_id', user.id),
@@ -54,12 +53,10 @@ export async function POST() {
 
   const myLikedIds = new Set((myLikes ?? []).map((r: { to_user_id: string }) => r.to_user_id))
   const likedMeIds = new Set((likesForMe ?? []).map((r: { from_user_id: string }) => r.from_user_id))
-
-  // Find mutual matches (they liked me AND I liked them)
   const mutualMatchIds = [...myLikedIds].filter(id => likedMeIds.has(id))
+
   if (mutualMatchIds.length === 0) return NextResponse.json({ created: 0 })
 
-  // Verify they're opposite gender
   const { data: matchProfiles } = await supabase
     .from('profiles').select('id, gender').in('id', mutualMatchIds)
   const oppositeGenderMatches = (matchProfiles ?? [])
@@ -68,14 +65,11 @@ export async function POST() {
 
   if (oppositeGenderMatches.length === 0) return NextResponse.json({ created: 0 })
 
-  // Get my same-gender friends
   const myFriends = await getAcceptedFriends(supabase, user.id)
 
   let created = 0
   for (const matchId of oppositeGenderMatches) {
-    // Get their same-gender friends
     const theirFriends = await getAcceptedFriends(supabase, matchId)
-
     for (const myFriend of myFriends) {
       for (const theirFriend of theirFriends) {
         if (myFriend === theirFriend) continue
@@ -84,17 +78,13 @@ export async function POST() {
           const girlId = isGuy ? matchId : user.id
           const guyFriend = isGuy ? myFriend : theirFriend
           const girlFriend = isGuy ? theirFriend : myFriend
-
           if (!(await proposalExists(supabase, guyId, guyFriend, girlId, girlFriend))) {
-            await supabase.from('double_date_proposals').insert({
-              guy1_id: guyId,
-              guy2_id: guyFriend,
-              girl1_id: girlId,
-              girl2_id: girlFriend,
-              status: 'pending',
-              expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+            const { error } = await supabase.from('double_date_proposals').insert({
+              guy1_id: guyId, guy2_id: guyFriend,
+              girl1_id: girlId, girl2_id: girlFriend,
+              status: 'confirmed',
             })
-            created++
+            if (!error) created++
           }
         }
       }

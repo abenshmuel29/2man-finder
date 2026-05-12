@@ -1,7 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
-async function getAcceptedFriends(supabase: Awaited<ReturnType<typeof createClient>>, userId: string): Promise<string[]> {
+type SupabaseClient = Awaited<ReturnType<typeof createClient>>
+
+async function getAcceptedFriends(supabase: SupabaseClient, userId: string): Promise<string[]> {
   const { data } = await supabase
     .from('friendships')
     .select('requester_id, receiver_id')
@@ -12,12 +14,26 @@ async function getAcceptedFriends(supabase: Awaited<ReturnType<typeof createClie
   )
 }
 
-async function hasMutualLike(supabase: Awaited<ReturnType<typeof createClient>>, a: string, b: string): Promise<boolean> {
+async function hasMutualLike(supabase: SupabaseClient, a: string, b: string): Promise<boolean> {
   const [{ data: aToB }, { data: bToA }] = await Promise.all([
-    supabase.from('interests').select('id').eq('from_user_id', a).eq('to_user_id', b).single(),
-    supabase.from('interests').select('id').eq('from_user_id', b).eq('to_user_id', a).single(),
+    supabase.from('interests').select('id').eq('from_user_id', a).eq('to_user_id', b).maybeSingle(),
+    supabase.from('interests').select('id').eq('from_user_id', b).eq('to_user_id', a).maybeSingle(),
   ])
   return !!(aToB && bToA)
+}
+
+async function proposalExists(supabase: SupabaseClient, guyId: string, guyFriend: string, girlId: string, girlFriend: string): Promise<boolean> {
+  const { data } = await supabase
+    .from('double_date_proposals')
+    .select('id')
+    .or([
+      `and(guy1_id.eq.${guyId},guy2_id.eq.${guyFriend},girl1_id.eq.${girlId},girl2_id.eq.${girlFriend})`,
+      `and(guy1_id.eq.${guyFriend},guy2_id.eq.${guyId},girl1_id.eq.${girlFriend},girl2_id.eq.${girlId})`,
+      `and(guy1_id.eq.${guyId},guy2_id.eq.${guyFriend},girl1_id.eq.${girlFriend},girl2_id.eq.${girlId})`,
+      `and(guy1_id.eq.${guyFriend},guy2_id.eq.${guyId},girl1_id.eq.${girlId},girl2_id.eq.${girlFriend})`,
+    ].join(','))
+    .limit(1)
+  return (data?.length ?? 0) > 0
 }
 
 export async function POST(request: Request) {
@@ -34,7 +50,7 @@ export async function POST(request: Request) {
   // Check for mutual match
   const { data: mutual } = await supabase
     .from('interests').select('id')
-    .eq('from_user_id', to_user_id).eq('to_user_id', user.id).single()
+    .eq('from_user_id', to_user_id).eq('to_user_id', user.id).maybeSingle()
 
   if (!mutual) return NextResponse.json({ mutual: false })
 
@@ -49,38 +65,26 @@ export async function POST(request: Request) {
   const guyId = me.gender === 'male' ? user.id : to_user_id
   const girlId = me.gender === 'female' ? user.id : to_user_id
 
-  // Find all accepted friends of both
   const [guyFriends, girlFriends] = await Promise.all([
     getAcceptedFriends(supabase, guyId),
     getAcceptedFriends(supabase, girlId),
   ])
 
-  // Check every (guyFriend, girlFriend) pair for mutual like → create proposal
-  const proposals: Array<{ guy1_id: string; guy2_id: string; girl1_id: string; girl2_id: string; status: string; expires_at: string }> = []
-
+  let created = 0
   for (const guyFriend of guyFriends) {
     for (const girlFriend of girlFriends) {
       if (await hasMutualLike(supabase, guyFriend, girlFriend)) {
-        // Check proposal doesn't already exist
-        const { data: existing } = await supabase
-          .from('double_date_proposals').select('id')
-          .or(`and(guy1_id.eq.${guyId},guy2_id.eq.${guyFriend},girl1_id.eq.${girlId},girl2_id.eq.${girlFriend}),and(guy1_id.eq.${guyFriend},guy2_id.eq.${guyId},girl1_id.eq.${girlFriend},girl2_id.eq.${girlId})`)
-          .single()
-        if (!existing) {
-          proposals.push({
+        if (!(await proposalExists(supabase, guyId, guyFriend, girlId, girlFriend))) {
+          const { error: insertErr } = await supabase.from('double_date_proposals').insert({
             guy1_id: guyId, guy2_id: guyFriend,
             girl1_id: girlId, girl2_id: girlFriend,
-            status: 'pending',
-            expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+            status: 'confirmed',
           })
+          if (!insertErr) created++
         }
       }
     }
   }
 
-  if (proposals.length > 0) {
-    await supabase.from('double_date_proposals').insert(proposals)
-  }
-
-  return NextResponse.json({ mutual: true, proposals: proposals.length })
+  return NextResponse.json({ mutual: true, created })
 }
