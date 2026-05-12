@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { NEIGHBORHOODS, BODY_TYPES } from '@/lib/types'
 import Link from 'next/link'
-import { MapPin, Briefcase, GraduationCap } from 'lucide-react'
+import { MapPin, GraduationCap } from 'lucide-react'
 import BackButton from '@/components/BackButton'
 import ProfileFriends from '@/components/ProfileFriends'
 
@@ -26,7 +26,6 @@ export default async function ViewProfilePage({ params }: { params: Promise<{ us
 
   const neighborhoodLabel = NEIGHBORHOODS.find(n => n.value === profile.neighborhood)?.label
   const bodyTypeLabel = BODY_TYPES.find(b => b.value === profile.body_type)?.label
-  const tags = [...(profile.sports ?? []), ...(profile.interests ?? []), ...(profile.hobbies ?? [])]
 
   // Compute mutual friends
   const [{ data: myFriendships }, { data: theirFriendships }] = await Promise.all([
@@ -90,7 +89,6 @@ export default async function ViewProfilePage({ params }: { params: Promise<{ us
       <div className="flex flex-wrap gap-2">
         {profile.height && <Pill text={profile.height} />}
         {bodyTypeLabel && <Pill text={bodyTypeLabel} />}
-        {profile.job && <Pill text={profile.job} icon={<Briefcase size={12} />} />}
         {profile.school && <Pill text={profile.school} icon={<GraduationCap size={12} />} />}
       </div>
 
@@ -98,15 +96,6 @@ export default async function ViewProfilePage({ params }: { params: Promise<{ us
       {profile.bio && (
         <div className="card p-4">
           <p className="text-gray-300 text-sm leading-relaxed">{profile.bio}</p>
-        </div>
-      )}
-
-      {/* Tags */}
-      {tags.length > 0 && (
-        <div className="card p-4 flex flex-col gap-3">
-          {profile.sports?.length > 0 && <TagSection label="Sports" tags={profile.sports} />}
-          {profile.interests?.length > 0 && <TagSection label="Interests" tags={profile.interests} />}
-          {profile.hobbies?.length > 0 && <TagSection label="Hobbies" tags={profile.hobbies} />}
         </div>
       )}
 
@@ -152,18 +141,3 @@ function Pill({ text, icon }: { text: string; icon?: React.ReactNode }) {
   )
 }
 
-function TagSection({ label, tags }: { label: string; tags: string[] }) {
-  return (
-    <div className="flex flex-col gap-2">
-      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{label}</p>
-      <div className="flex flex-wrap gap-2">
-        {tags.map(tag => (
-          <span key={tag} className="px-3 py-1 rounded-full text-xs"
-            style={{ background: '#1A1A2E', border: '1px solid #2D2D50', color: '#A78BFA' }}>
-            {tag}
-          </span>
-        ))}
-      </div>
-    </div>
-  )
-}

@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { NEIGHBORHOODS, BODY_TYPES } from '@/lib/types'
 import Link from 'next/link'
-import { MapPin, Briefcase, GraduationCap, Edit } from 'lucide-react'
+import { MapPin, GraduationCap, Edit } from 'lucide-react'
 
 interface MiniProfile {
   id: string
@@ -92,7 +92,6 @@ export default async function ProfilePage() {
         {profile.bio && <p className="text-sm" style={{ color: '#c0bfd4', lineHeight: 1.6 }}>{profile.bio}</p>}
         <div className="flex flex-wrap gap-3 text-sm" style={{ color: '#7B7A96' }}>
           {neighborhoodLabel && <span className="flex items-center gap-1"><MapPin size={14} />{neighborhoodLabel}</span>}
-          {profile.job && <span className="flex items-center gap-1"><Briefcase size={14} />{profile.job}</span>}
           {profile.school && <span className="flex items-center gap-1"><GraduationCap size={14} />{profile.school}</span>}
         </div>
       </div>
@@ -116,24 +115,6 @@ export default async function ProfilePage() {
         </div>
       )}
 
-      {/* Tags */}
-      {[
-        { label: 'Sports', items: profile.sports },
-        { label: 'Interests', items: profile.interests },
-        { label: 'Hobbies', items: profile.hobbies },
-      ].filter(g => g.items?.length > 0).map(group => (
-        <div key={group.label} className="card p-5 flex flex-col gap-3">
-          <h3 className="font-semibold text-white">{group.label}</h3>
-          <div className="flex flex-wrap gap-2">
-            {group.items.map((tag: string) => (
-              <span key={tag} className="px-3 py-1 rounded-full text-sm"
-                style={{ background: '#252540', border: '1px solid rgba(155,93,229,0.2)', color: '#C77DFF' }}>
-                {tag}
-              </span>
-            ))}
-          </div>
-        </div>
-      ))}
 
       {/* Social (private) */}
       <div className="card p-5 flex flex-col gap-3">

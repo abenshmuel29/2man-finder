@@ -7,25 +7,26 @@ export type Neighborhood =
   | 'south_beach' | 'miami_beach' | 'brickell' | 'downtown' | 'wynwood'
   | 'coral_gables' | 'coconut_grove' | 'aventura' | 'north_miami'
   | 'south_miami' | 'doral' | 'kendall' | 'hialeah' | 'little_havana'
-  | 'midtown' | 'design_district'
+  | 'midtown' | 'design_district' | 'miami_shores'
 
 export const NEIGHBORHOODS: { value: Neighborhood; label: string }[] = [
-  { value: 'south_beach', label: 'South Beach' },
-  { value: 'miami_beach', label: 'Miami Beach' },
-  { value: 'brickell', label: 'Brickell' },
-  { value: 'downtown', label: 'Downtown Miami' },
-  { value: 'wynwood', label: 'Wynwood' },
-  { value: 'coral_gables', label: 'Coral Gables' },
-  { value: 'coconut_grove', label: 'Coconut Grove' },
   { value: 'aventura', label: 'Aventura' },
-  { value: 'north_miami', label: 'North Miami' },
-  { value: 'south_miami', label: 'South Miami' },
-  { value: 'doral', label: 'Doral' },
-  { value: 'kendall', label: 'Kendall' },
-  { value: 'hialeah', label: 'Hialeah' },
-  { value: 'little_havana', label: 'Little Havana' },
-  { value: 'midtown', label: 'Midtown' },
+  { value: 'brickell', label: 'Brickell' },
+  { value: 'coconut_grove', label: 'Coconut Grove' },
+  { value: 'coral_gables', label: 'Coral Gables' },
   { value: 'design_district', label: 'Design District' },
+  { value: 'doral', label: 'Doral' },
+  { value: 'downtown', label: 'Downtown Miami' },
+  { value: 'hialeah', label: 'Hialeah' },
+  { value: 'kendall', label: 'Kendall' },
+  { value: 'little_havana', label: 'Little Havana' },
+  { value: 'miami_beach', label: 'Miami Beach' },
+  { value: 'miami_shores', label: 'Miami Shores' },
+  { value: 'midtown', label: 'Midtown' },
+  { value: 'north_miami', label: 'North Miami' },
+  { value: 'south_beach', label: 'South Beach' },
+  { value: 'south_miami', label: 'South Miami' },
+  { value: 'wynwood', label: 'Wynwood' },
 ]
 
 export const BODY_TYPES: { value: BodyType; label: string }[] = [
@@ -46,11 +47,7 @@ export interface Profile {
   height: string | null
   weight: string | null
   body_type: BodyType | null
-  sports: string[]
-  interests: string[]
-  hobbies: string[]
   school: string | null
-  job: string | null
   snapchat: string | null
   instagram: string | null
   neighborhood: Neighborhood | null

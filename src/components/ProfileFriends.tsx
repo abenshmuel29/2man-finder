@@ -12,7 +12,6 @@ interface Profile {
   gender: string | null
   photos: string[]
   neighborhood: string | null
-  job: string | null
 }
 
 export default function ProfileFriends({ profileId, profileGender }: { profileId: string; profileGender: string }) {
@@ -49,7 +48,7 @@ export default function ProfileFriends({ profileId, profileGender }: { profileId
       // Load their profiles
       const { data: profiles } = await supabase
         .from('profiles')
-        .select('id, name, age, gender, photos, neighborhood, job')
+        .select('id, name, age, gender, photos, neighborhood')
         .in('id', friendIds)
         .eq('profile_complete', true)
         .eq('gender', profileGender)
@@ -112,7 +111,6 @@ export default function ProfileFriends({ profileId, profileGender }: { profileId
                 <div className="min-w-0">
                   <p className="font-semibold text-white text-sm">{friend.name}{friend.age ? `, ${friend.age}` : ''}</p>
                   {friend.neighborhood && <p className="text-xs text-gray-500">{friend.neighborhood}</p>}
-                  {friend.job && <p className="text-xs text-gray-400">{friend.job}</p>}
                 </div>
               </Link>
               <div className="flex-shrink-0">

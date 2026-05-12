@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { type Profile, NEIGHBORHOODS, BODY_TYPES } from '@/lib/types'
-import { MapPin, Briefcase, GraduationCap, Heart, X } from 'lucide-react'
+import { MapPin, GraduationCap, Heart, X } from 'lucide-react'
 
 interface Props {
   profile: Profile
@@ -90,23 +90,10 @@ export default function ProfileCard({ profile, onNext }: Props) {
         <div className="flex flex-wrap gap-2">
           {profile.height && <Pill text={profile.height} />}
           {bodyTypeLabel && <Pill text={bodyTypeLabel} />}
-          {profile.job && <Pill text={profile.job} icon={<Briefcase size={12} />} />}
           {profile.school && <Pill text={profile.school} icon={<GraduationCap size={12} />} />}
         </div>
 
         {profile.bio && <p className="text-gray-300 text-sm">{profile.bio}</p>}
-
-        {/* Tags */}
-        {[...( profile.sports ?? []), ...(profile.interests ?? []), ...(profile.hobbies ?? [])].slice(0, 8).length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {[...(profile.sports ?? []), ...(profile.interests ?? []), ...(profile.hobbies ?? [])].slice(0, 8).map(tag => (
-              <span key={tag} className="px-2.5 py-1 rounded-full text-xs"
-                style={{ background: '#252540', border: '1px solid #2D2D50', color: '#A78BFA' }}>
-                {tag}
-              </span>
-            ))}
-          </div>
-        )}
 
         {/* Action buttons */}
         <div className="flex gap-4 mt-2">

@@ -9,6 +9,7 @@ function SignupForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const joinGroupId = searchParams.get('join')
+  const invitedBy = searchParams.get('invitedBy')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
@@ -27,7 +28,11 @@ function SignupForm() {
       setError(error.message)
       setLoading(false)
     } else {
-      router.push(joinGroupId ? `/profile/setup?join=${joinGroupId}` : '/profile/setup')
+      const params = new URLSearchParams()
+      if (joinGroupId) params.set('join', joinGroupId)
+      if (invitedBy) params.set('invitedBy', invitedBy)
+      const qs = params.toString()
+      router.push(qs ? `/profile/setup?${qs}` : '/profile/setup')
       router.refresh()
     }
   }

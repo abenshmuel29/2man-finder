@@ -13,7 +13,6 @@ interface Profile {
   photos: string[]
   neighborhood: string | null
   bio: string | null
-  job: string | null
 }
 
 const HOOD_FILTERS = [
@@ -21,10 +20,14 @@ const HOOD_FILTERS = [
   { label: 'South Beach', value: 'south_beach' },
   { label: 'Brickell', value: 'brickell' },
   { label: 'Wynwood', value: 'wynwood' },
-  { label: 'Coral Gables', value: 'coral_gables' },
-  { label: 'Coconut Grove', value: 'coconut_grove' },
   { label: 'Midtown', value: 'midtown' },
   { label: 'Downtown', value: 'downtown' },
+  { label: 'Coral Gables', value: 'coral_gables' },
+  { label: 'Coconut Grove', value: 'coconut_grove' },
+  { label: 'Miami Shores', value: 'miami_shores' },
+  { label: 'Miami Beach', value: 'miami_beach' },
+  { label: 'North Miami', value: 'north_miami' },
+  { label: 'Aventura', value: 'aventura' },
 ]
 
 export default function SearchPage() {
@@ -102,7 +105,7 @@ export default function SearchPage() {
         if (fofIds.length > 0) {
           const { data: fofProfiles } = await supabase
             .from('profiles')
-            .select('id, name, age, gender, photos, neighborhood, bio, job')
+            .select('id, name, age, gender, photos, neighborhood, bio')
             .in('id', fofIds)
             .eq('profile_complete', true)
             .eq('gender', me.gender)
@@ -121,7 +124,7 @@ export default function SearchPage() {
     const supabase = createClient()
     let query2 = supabase
       .from('profiles')
-      .select('id, name, age, gender, photos, neighborhood, bio, job')
+      .select('id, name, age, gender, photos, neighborhood, bio')
       .ilike('name', `%${q.trim()}%`)
       .eq('profile_complete', true)
       .neq('id', myId ?? '')
@@ -187,7 +190,6 @@ export default function SearchPage() {
           <div className="min-w-0">
             <p style={{ fontWeight: 600, fontSize: 15, lineHeight: 1.4 }}>{profile.name}{profile.age ? `, ${profile.age}` : ''}</p>
             {profile.neighborhood && <p style={{ color: '#7B7A96', fontSize: 12, lineHeight: 1.5 }}>{profile.neighborhood.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</p>}
-            {profile.job && <p style={{ color: '#9CA3AF', fontSize: 12, lineHeight: 1.5 }}>{profile.job}</p>}
             <MutualBadge profileId={profile.id} />
           </div>
         </Link>

@@ -4,7 +4,10 @@ import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import ProposalCard from '@/components/ProposalCard'
-import { Heart, Users, Check, X } from 'lucide-react'
+import dynamic from 'next/dynamic'
+import { Heart, Users, Check, X, Link2 } from 'lucide-react'
+
+const Confetti = dynamic(() => import('@/components/Confetti'), { ssr: false })
 
 interface MiniProfile {
   id: string
@@ -13,7 +16,6 @@ interface MiniProfile {
   photos: string[]
   neighborhood: string | null
   gender?: string | null
-  job?: string | null
 }
 
 interface Friendship {
@@ -87,6 +89,8 @@ export default function DatesAndFriendsPage() {
   const [myLikes, setMyLikes] = useState<InterestRow[]>([])
   const [likesForMe, setLikesForMe] = useState<InterestRow[]>([])
   const [loading, setLoading] = useState(true)
+  const [showConfetti, setShowConfetti] = useState(false)
+  const [inviteCopied, setInviteCopied] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -104,8 +108,8 @@ export default function DatesAndFriendsPage() {
         .or(`guy1_id.eq.${user.id},guy2_id.eq.${user.id},girl1_id.eq.${user.id},girl2_id.eq.${user.id}`)
         .order('created_at', { ascending: false }),
       fetch('/api/friends').then(r => r.json()),
-      supabase.from('interests').select('from_user_id, to_user_id, profiles!interests_to_user_id_fkey(id, name, age, photos, neighborhood, gender, job)').eq('from_user_id', user.id),
-      supabase.from('interests').select('from_user_id, to_user_id, profiles!interests_from_user_id_fkey(id, name, age, photos, neighborhood, gender, job)').eq('to_user_id', user.id),
+      supabase.from('interests').select('from_user_id, to_user_id, profiles!interests_to_user_id_fkey(id, name, age, photos, neighborhood, gender)').eq('from_user_id', user.id),
+      supabase.from('interests').select('from_user_id, to_user_id, profiles!interests_from_user_id_fkey(id, name, age, photos, neighborhood, gender)').eq('to_user_id', user.id),
     ])
 
     // Fetch profiles for proposals separately to avoid FK name dependency
@@ -115,7 +119,7 @@ export default function DatesAndFriendsPage() {
     if (profileIds.length > 0) {
       const { data: profilesData } = await supabase
         .from('profiles')
-        .select('id, name, age, photos, neighborhood, job, snapchat, instagram')
+        .select('id, name, age, photos, neighborhood, snapchat, instagram')
         .in('id', profileIds)
       profileMap = Object.fromEntries((profilesData ?? []).map(p => [p.id, p]))
     }
@@ -132,6 +136,17 @@ export default function DatesAndFriendsPage() {
     setMyLikes((myLikesRes.data ?? []).map((r: any) => ({ from_user_id: r.from_user_id, to_user_id: r.to_user_id, profile: r.profiles })))
     setLikesForMe((likesForMeRes.data ?? []).map((r: any) => ({ from_user_id: r.from_user_id, to_user_id: r.to_user_id, profile: r.profiles })))
     setLoading(false)
+
+    // Fire confetti once per session when confirmed proposals are first detected
+    const confirmedCount = proposals.filter((p: any) => p.status === 'confirmed').length
+    if (confirmedCount > 0) {
+      const seenKey = `confetti_shown_${user.id}`
+      if (!sessionStorage.getItem(seenKey)) {
+        sessionStorage.setItem(seenKey, '1')
+        setShowConfetti(true)
+        setTimeout(() => setShowConfetti(false), 4000)
+      }
+    }
   }, [])
 
   useEffect(() => { load() }, [load])
@@ -195,6 +210,7 @@ export default function DatesAndFriendsPage() {
 
   return (
     <div className="flex flex-col gap-4 py-2">
+      {showConfetti && <Confetti />}
       <h1 className="text-2xl font-bold text-white">2Mans & Friends</h1>
 
       {/* Tabs */}
@@ -279,6 +295,27 @@ export default function DatesAndFriendsPage() {
       {/* ── FRIENDS TAB ── */}
       {tab === 'friends' && (
         <div className="flex flex-col gap-5">
+          {/* Invite link */}
+          <button
+            onClick={() => {
+              if (!userId) return
+              const link = `${window.location.origin}/invite/${userId}`
+              navigator.clipboard.writeText(link).then(() => {
+                setInviteCopied(true)
+                setTimeout(() => setInviteCopied(false), 2500)
+              })
+            }}
+            className="flex items-center justify-center gap-2 w-full py-3 rounded-xl font-semibold text-sm transition-all"
+            style={{
+              background: inviteCopied
+                ? 'linear-gradient(135deg,#22c55e,#16a34a)'
+                : 'linear-gradient(135deg,#FF4D6D,#9B5DE5)',
+              color: 'white',
+              boxShadow: '0 4px 14px rgba(155,93,229,0.3)',
+            }}>
+            <Link2 size={16} />
+            {inviteCopied ? '✓ Link Copied!' : 'Copy Invite Link'}
+          </button>
           {incomingFriendRequests.length > 0 && (
             <div className="flex flex-col gap-3">
               <h2 className="font-semibold text-white flex items-center gap-2">
