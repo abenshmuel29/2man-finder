@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { NEIGHBORHOODS, BODY_TYPES, type Gender, type Neighborhood, type BodyType } from '@/lib/types'
+import TagInput from '@/components/TagInput'
 import { Upload, X } from 'lucide-react'
 
 const STEPS = ['Basic Info', 'Stats', 'About You', 'Social & Location', 'Photos']
@@ -86,35 +87,6 @@ function ProfileSetupContent() {
     })
     if (error) { setError(error.message); setLoading(false) }
     else router.push(joinGroupId ? `/join/${joinGroupId}` : '/discover')
-  }
-
-  function TagInput({ label, value, onChange, list, onAdd, onRemove }: {
-    label: string; value: string; onChange: (v: string) => void
-    list: string[]; onAdd: () => void; onRemove: (v: string) => void
-  }) {
-    return (
-      <div className="flex flex-col gap-2">
-        <label className="text-sm font-medium text-gray-300">{label}</label>
-        <div className="flex gap-2">
-          <input className="input-field flex-1" value={value} onChange={e => onChange(e.target.value)}
-            placeholder={`Add ${label.toLowerCase()} and press Enter`}
-            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); onAdd() } }} />
-          <button type="button" onClick={onAdd} className="px-4 py-2 rounded-lg text-sm font-medium"
-            style={{ background: '#8B5CF6', color: 'white' }}>Add</button>
-        </div>
-        {list.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {list.map(tag => (
-              <span key={tag} className="flex items-center gap-1 px-3 py-1 rounded-full text-sm"
-                style={{ background: '#252540', border: '1px solid #2D2D50', color: '#C4B5FD' }}>
-                {tag}
-                <button onClick={() => onRemove(tag)} className="hover:text-white"><X size={12} /></button>
-              </span>
-            ))}
-          </div>
-        )}
-      </div>
-    )
   }
 
   const steps = [
@@ -214,7 +186,7 @@ function ProfileSetupContent() {
 
     // Step 4: Photos
     <div key={4} className="flex flex-col gap-5">
-      <p className="text-gray-400 text-sm">Add at least 1 photo. Others will see these when browsing.</p>
+      <p className="text-gray-400 text-sm">Add at least 3 photos (max 5). Others will see these when browsing.</p>
       <div className="grid grid-cols-2 gap-3">
         {photos.map((url, i) => (
           <div key={i} className="relative aspect-square rounded-xl overflow-hidden">
@@ -226,7 +198,7 @@ function ProfileSetupContent() {
             </button>
           </div>
         ))}
-        {photos.length < 6 && (
+        {photos.length < 5 && (
           <label className="aspect-square rounded-xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer"
             style={{ borderColor: '#2D2D50', color: '#6B7280' }}>
             <Upload size={24} />
@@ -234,6 +206,9 @@ function ProfileSetupContent() {
             <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} disabled={uploading} />
           </label>
         )}
+        <p className="text-xs col-span-2" style={{ color: photos.length >= 3 ? '#4ADE80' : '#9CA3AF' }}>
+          {photos.length}/5 photos {photos.length < 3 ? `— add ${3 - photos.length} more` : '✓'}
+        </p>
       </div>
     </div>,
   ]
@@ -243,7 +218,7 @@ function ProfileSetupContent() {
     height || weight || bodyType,
     true,
     neighborhood,
-    photos.length > 0,
+    photos.length >= 3,
   ][step]
 
   return (
@@ -281,7 +256,7 @@ function ProfileSetupContent() {
               Next
             </button>
           ) : (
-            <button onClick={handleSubmit} disabled={loading || photos.length === 0} className="btn-primary flex-1">
+            <button onClick={handleSubmit} disabled={loading || photos.length < 3} className="btn-primary flex-1">
               {loading ? 'Saving...' : 'Complete Profile'}
             </button>
           )}

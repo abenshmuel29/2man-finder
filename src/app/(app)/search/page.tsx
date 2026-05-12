@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Search, UserPlus, Check } from 'lucide-react'
+import { Search, UserPlus, Clock, Check } from 'lucide-react'
 
 interface Profile {
   id: string
@@ -13,24 +13,16 @@ interface Profile {
   neighborhood: string | null
   bio: string | null
   job: string | null
-  school: string | null
-}
-
-interface Group {
-  id: string
-  name: string
 }
 
 export default function SearchPage() {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<Profile[]>([])
   const [myGender, setMyGender] = useState<string | null>(null)
-  const [myGroups, setMyGroups] = useState<Group[]>([])
   const [myId, setMyId] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
-  const [inviteOpen, setInviteOpen] = useState<string | null>(null)
-  const [invited, setInvited] = useState<Record<string, string>>({}) // userId -> groupId
-  const [inviting, setInviting] = useState(false)
+  // map of userId → 'pending' | 'accepted' | 'sent'
+  const [friendStatus, setFriendStatus] = useState<Record<string, string>>({})
 
   useEffect(() => {
     async function init() {
@@ -40,15 +32,19 @@ export default function SearchPage() {
       setMyId(user.id)
       const { data: me } = await supabase.from('profiles').select('gender').eq('id', user.id).single()
       if (me) setMyGender(me.gender)
-      // Load my groups (groups I'm an approved member of)
-      const { data: memberships } = await supabase
-        .from('friend_group_members')
-        .select('group_id, friend_groups(id, name)')
-        .eq('user_id', user.id)
-        .eq('status', 'approved')
-      if (memberships) {
-        setMyGroups(memberships.map((m: any) => m.friend_groups).filter(Boolean))
+
+      // Load existing friendships so we know current status
+      const { data: friendships } = await supabase
+        .from('friendships')
+        .select('requester_id, receiver_id, status')
+        .or(`requester_id.eq.${user.id},receiver_id.eq.${user.id}`)
+
+      const statusMap: Record<string, string> = {}
+      for (const f of friendships ?? []) {
+        const otherId = f.requester_id === user.id ? f.receiver_id : f.requester_id
+        statusMap[otherId] = f.status === 'accepted' ? 'accepted' : (f.requester_id === user.id ? 'sent' : 'pending')
       }
+      setFriendStatus(statusMap)
     }
     init()
   }, [])
@@ -60,7 +56,7 @@ export default function SearchPage() {
     const supabase = createClient()
     const { data } = await supabase
       .from('profiles')
-      .select('id, name, age, gender, photos, neighborhood, bio, job, school')
+      .select('id, name, age, gender, photos, neighborhood, bio, job')
       .ilike('name', `%${q.trim()}%`)
       .eq('profile_complete', true)
       .neq('id', myId ?? '')
@@ -69,18 +65,14 @@ export default function SearchPage() {
     setLoading(false)
   }
 
-  async function inviteToGroup(targetUserId: string, groupId: string) {
-    setInviting(true)
-    const res = await fetch(`/api/groups/${groupId}/invite`, {
+  async function sendFollowRequest(targetId: string) {
+    setFriendStatus(prev => ({ ...prev, [targetId]: 'sent' }))
+    const res = await fetch('/api/friends', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id: targetUserId }),
+      body: JSON.stringify({ receiver_id: targetId }),
     })
-    if (res.ok) {
-      setInvited(prev => ({ ...prev, [targetUserId]: groupId }))
-    }
-    setInviteOpen(null)
-    setInviting(false)
+    if (!res.ok) setFriendStatus(prev => { const n = { ...prev }; delete n[targetId]; return n })
   }
 
   return (
@@ -92,12 +84,8 @@ export default function SearchPage() {
 
       <div className="relative">
         <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
-        <input
-          className="input-field pl-10"
-          placeholder="Search by name..."
-          value={query}
-          onChange={e => handleSearch(e.target.value)}
-        />
+        <input className="input-field pl-10" placeholder="Search by name..."
+          value={query} onChange={e => handleSearch(e.target.value)} />
       </div>
 
       {loading && <p className="text-gray-500 text-sm text-center">Searching...</p>}
@@ -105,8 +93,7 @@ export default function SearchPage() {
       <div className="flex flex-col gap-3">
         {results.map(profile => {
           const isSameGender = profile.gender === myGender
-          const alreadyInvited = invited[profile.id]
-          const isOpen = inviteOpen === profile.id
+          const status = friendStatus[profile.id]
 
           return (
             <div key={profile.id} className="card p-4 flex gap-3">
@@ -125,32 +112,24 @@ export default function SearchPage() {
                     {profile.job && <p className="text-xs text-gray-400">{profile.job}</p>}
                     {profile.bio && <p className="text-xs text-gray-500 mt-1 line-clamp-2">{profile.bio}</p>}
                   </div>
-                  {isSameGender && myGroups.length > 0 && (
-                    <div className="relative flex-shrink-0">
-                      {alreadyInvited ? (
+                  {isSameGender && (
+                    <div className="flex-shrink-0">
+                      {status === 'accepted' ? (
                         <span className="flex items-center gap-1 text-xs text-green-400 font-medium">
-                          <Check size={13} /> Invited
+                          <Check size={13} /> Friends
                         </span>
+                      ) : status === 'sent' ? (
+                        <span className="flex items-center gap-1 text-xs text-gray-400">
+                          <Clock size={13} /> Requested
+                        </span>
+                      ) : status === 'pending' ? (
+                        <span className="text-xs text-yellow-400">Wants to follow you</span>
                       ) : (
-                        <button
-                          onClick={() => setInviteOpen(isOpen ? null : profile.id)}
+                        <button onClick={() => sendFollowRequest(profile.id)}
                           className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold"
                           style={{ background: '#8B5CF6', color: 'white' }}>
-                          <UserPlus size={13} /> Invite
+                          <UserPlus size={13} /> Follow
                         </button>
-                      )}
-                      {isOpen && (
-                        <div className="absolute right-0 top-8 z-10 rounded-xl shadow-xl overflow-hidden"
-                          style={{ background: '#1A1A2E', border: '1px solid #2D2D50', minWidth: '160px' }}>
-                          <p className="text-xs text-gray-500 px-3 pt-2 pb-1">Invite to group:</p>
-                          {myGroups.map(g => (
-                            <button key={g.id} disabled={inviting}
-                              onClick={() => inviteToGroup(profile.id, g.id)}
-                              className="w-full text-left px-3 py-2 text-sm text-white hover:bg-purple-900 transition-colors">
-                              {g.name}
-                            </button>
-                          ))}
-                        </div>
                       )}
                     </div>
                   )}

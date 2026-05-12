@@ -26,32 +26,75 @@ export default function DiscoverPage() {
 
     const oppositeGender = me.gender === 'male' ? 'female' : 'male'
 
-    // Get already interacted user IDs
     const [{ data: liked }, { data: passed }] = await Promise.all([
       supabase.from('interests').select('to_user_id').eq('from_user_id', user.id),
       supabase.from('passes').select('to_user_id').eq('from_user_id', user.id),
     ])
 
-    const excludeIds = [
+    const seenIds = new Set([
       user.id,
       ...(liked?.map(l => l.to_user_id) ?? []),
       ...(passed?.map(p => p.to_user_id) ?? []),
-    ]
+    ])
 
-    let query = supabase
-      .from('profiles')
-      .select('*')
-      .eq('gender', oppositeGender)
-      .eq('profile_complete', true)
-      .not('id', 'in', `(${excludeIds.join(',')})`)
-      .limit(20)
+    // Get my accepted friends
+    const { data: myFriendships } = await supabase
+      .from('friendships')
+      .select('requester_id, receiver_id')
+      .or(`requester_id.eq.${user.id},receiver_id.eq.${user.id}`)
+      .eq('status', 'accepted')
 
-    if (neighborhoodFilter) {
-      query = query.eq('neighborhood', neighborhoodFilter)
+    const myFriendIds = (myFriendships ?? []).map((f: { requester_id: string; receiver_id: string }) =>
+      f.requester_id === user.id ? f.receiver_id : f.requester_id
+    )
+
+    // Find priority profiles: friends of people my friends matched with
+    let priorityIds: string[] = []
+    if (myFriendIds.length > 0) {
+      const [{ data: friendsOut }, { data: friendsIn }] = await Promise.all([
+        supabase.from('interests').select('from_user_id, to_user_id').in('from_user_id', myFriendIds),
+        supabase.from('interests').select('from_user_id, to_user_id').in('to_user_id', myFriendIds),
+      ])
+      const mutualMatchedIds = (friendsOut ?? [])
+        .filter(o => (friendsIn ?? []).some(i => i.from_user_id === o.to_user_id && i.to_user_id === o.from_user_id))
+        .map(o => o.to_user_id)
+
+      if (mutualMatchedIds.length > 0) {
+        const { data: matchFriendships } = await supabase
+          .from('friendships')
+          .select('requester_id, receiver_id')
+          .or(`requester_id.in.(${mutualMatchedIds.join(',')}),receiver_id.in.(${mutualMatchedIds.join(',')})`)
+          .eq('status', 'accepted')
+
+        priorityIds = (matchFriendships ?? [])
+          .map((f: { requester_id: string; receiver_id: string }) =>
+            mutualMatchedIds.includes(f.requester_id) ? f.receiver_id : f.requester_id
+          )
+          .filter(id => !seenIds.has(id) && !myFriendIds.includes(id))
+      }
     }
 
-    const { data } = await query
-    setProfiles(data ?? [])
+    // Load priority profiles first
+    let priorityProfiles: Profile[] = []
+    if (priorityIds.length > 0) {
+      let q = supabase.from('profiles').select('*')
+        .eq('gender', oppositeGender).eq('profile_complete', true)
+        .in('id', priorityIds)
+      if (neighborhoodFilter) q = q.eq('neighborhood', neighborhoodFilter)
+      const { data } = await q
+      priorityProfiles = data ?? []
+    }
+
+    // Load general profiles (exclude seen + priority)
+    const excludeIds = [...seenIds, ...priorityIds]
+    let q = supabase.from('profiles').select('*')
+      .eq('gender', oppositeGender).eq('profile_complete', true)
+      .not('id', 'in', `(${excludeIds.join(',')})`)
+      .limit(20)
+    if (neighborhoodFilter) q = q.eq('neighborhood', neighborhoodFilter)
+    const { data: general } = await q
+
+    setProfiles([...priorityProfiles, ...(general ?? [])])
     setCurrentIndex(0)
     setLoading(false)
   }, [neighborhoodFilter])
@@ -62,11 +105,8 @@ export default function DiscoverPage() {
   const hasMore = currentIndex < profiles.length - 1
 
   function handleNext() {
-    if (hasMore) {
-      setCurrentIndex(i => i + 1)
-    } else {
-      loadProfiles()
-    }
+    if (hasMore) setCurrentIndex(i => i + 1)
+    else loadProfiles()
   }
 
   if (loading) {
@@ -80,7 +120,6 @@ export default function DiscoverPage() {
 
   return (
     <div className="flex flex-col gap-4 py-2">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-white">Discover</h1>
@@ -93,7 +132,6 @@ export default function DiscoverPage() {
         </button>
       </div>
 
-      {/* Filter panel */}
       {showFilter && (
         <div className="card p-4 flex flex-col gap-3">
           <p className="text-sm font-medium text-gray-300">Filter by neighborhood</p>
@@ -105,7 +143,6 @@ export default function DiscoverPage() {
         </div>
       )}
 
-      {/* Profile card or empty state */}
       {currentProfile ? (
         <>
           <p className="text-xs text-gray-600 text-center">{currentIndex + 1} of {profiles.length}</p>
@@ -117,9 +154,7 @@ export default function DiscoverPage() {
           <div>
             <h2 className="text-xl font-bold text-white mb-2">No more profiles</h2>
             <p className="text-gray-400 text-sm">
-              {neighborhoodFilter
-                ? "No one left in this area. Try removing the filter."
-                : "You've seen everyone for now. Check back later!"}
+              {neighborhoodFilter ? 'No one left in this area. Try removing the filter.' : "You've seen everyone for now. Check back later!"}
             </p>
           </div>
           <button onClick={loadProfiles} className="btn-primary" style={{ width: 'auto', padding: '0.75rem 2rem' }}>

@@ -3,13 +3,12 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Users, Compass, Heart, LogOut, User, Search } from 'lucide-react'
+import { Compass, Heart, LogOut, User, Search } from 'lucide-react'
 
 const links = [
   { href: '/discover', label: 'Discover', icon: Compass },
   { href: '/search', label: 'Search', icon: Search },
-  { href: '/proposals', label: 'Dates', icon: Heart },
-  { href: '/groups', label: 'Groups', icon: Users },
+  { href: '/proposals', label: 'Dates & Friends', icon: Heart },
   { href: '/profile', label: 'Profile', icon: User },
 ]
 
