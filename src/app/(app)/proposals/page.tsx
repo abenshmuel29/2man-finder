@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import ProposalCard from '@/components/ProposalCard'
-import { Heart, Users, Check, X, UserMinus } from 'lucide-react'
+import { Heart, Users, Check, X } from 'lucide-react'
 
 interface MiniProfile {
   id: string
@@ -37,17 +38,19 @@ function MiniCard({ profile, status, onAction }: {
 }) {
   return (
     <div className="card p-3 flex items-center gap-3">
-      <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0" style={{ background: '#252540' }}>
-        {profile.photos?.[0]
-          ? <img src={profile.photos[0]} alt="" className="w-full h-full object-cover" />
-          : <div className="w-full h-full flex items-center justify-center text-xl">
-              {profile.gender === 'male' ? '👨' : '👩'}
-            </div>}
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="font-semibold text-white text-sm">{profile.name}{profile.age ? `, ${profile.age}` : ''}</p>
-        {profile.neighborhood && <p className="text-xs text-gray-500">{profile.neighborhood}</p>}
-      </div>
+      <Link href={`/profile/${profile.id}`} className="flex items-center gap-3 flex-1 min-w-0">
+        <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0" style={{ background: '#252540' }}>
+          {profile.photos?.[0]
+            ? <img src={profile.photos[0]} alt="" className="w-full h-full object-cover" />
+            : <div className="w-full h-full flex items-center justify-center text-xl">
+                {profile.gender === 'male' ? '👨' : '👩'}
+              </div>}
+        </div>
+        <div className="min-w-0">
+          <p className="font-semibold text-white text-sm">{profile.name}{profile.age ? `, ${profile.age}` : ''}</p>
+          {profile.neighborhood && <p className="text-xs text-gray-500">{profile.neighborhood}</p>}
+        </div>
+      </Link>
       <div className="flex-shrink-0">
         {status === 'waiting' && (
           <span className="text-xs text-gray-400">Waiting for response...</span>
@@ -283,13 +286,15 @@ export default function DatesAndFriendsPage() {
                 const them = f.requester
                 return (
                   <div key={f.id} className="card p-3 flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0" style={{ background: '#252540' }}>
-                      {them.photos?.[0] ? <img src={them.photos[0]} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center">👤</div>}
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-medium text-white text-sm">{them.name}{them.age ? `, ${them.age}` : ''}</p>
-                      {them.neighborhood && <p className="text-xs text-gray-500">{them.neighborhood}</p>}
-                    </div>
+                    <Link href={`/profile/${them.id}`} className="flex items-center gap-3 flex-1 min-w-0">
+                      <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0" style={{ background: '#252540' }}>
+                        {them.photos?.[0] ? <img src={them.photos[0]} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center">👤</div>}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-medium text-white text-sm">{them.name}{them.age ? `, ${them.age}` : ''}</p>
+                        {them.neighborhood && <p className="text-xs text-gray-500">{them.neighborhood}</p>}
+                      </div>
+                    </Link>
                     <div className="flex gap-2">
                       <button onClick={() => respondToFriendRequest(f.id, 'accept')}
                         className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: '#166534' }}>
@@ -315,16 +320,19 @@ export default function DatesAndFriendsPage() {
                 const them = f.requester_id === userId ? f.receiver : f.requester
                 return (
                   <div key={f.id} className="card p-3 flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0" style={{ background: '#252540' }}>
-                      {them.photos?.[0] ? <img src={them.photos[0]} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center">👤</div>}
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-medium text-white text-sm">{them.name}{them.age ? `, ${them.age}` : ''}</p>
-                      {them.neighborhood && <p className="text-xs text-gray-500">{them.neighborhood}</p>}
-                    </div>
+                    <Link href={`/profile/${them.id}`} className="flex items-center gap-3 flex-1 min-w-0">
+                      <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0" style={{ background: '#252540' }}>
+                        {them.photos?.[0] ? <img src={them.photos[0]} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center">👤</div>}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-medium text-white text-sm">{them.name}{them.age ? `, ${them.age}` : ''}</p>
+                        {them.neighborhood && <p className="text-xs text-gray-500">{them.neighborhood}</p>}
+                      </div>
+                    </Link>
                     <button onClick={() => unfriend(f.id)}
-                      className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: '#252540' }}>
-                      <UserMinus size={14} className="text-gray-400" />
+                      className="px-3 py-1.5 rounded-lg text-xs font-medium"
+                      style={{ background: '#252540', color: '#9CA3AF', border: '1px solid #2D2D50' }}>
+                      Remove
                     </button>
                   </div>
                 )
