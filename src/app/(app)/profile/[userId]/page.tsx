@@ -49,7 +49,18 @@ export default async function ViewProfilePage({ params }: { params: Promise<{ us
   const theirFriendIds = (theirFriendships ?? []).map((f: { requester_id: string; receiver_id: string }) =>
     f.requester_id === userId ? f.receiver_id : f.requester_id
   )
-  const mutualFriendCount = theirFriendIds.filter(id => myFriendIds.has(id)).length
+  const mutualIds = theirFriendIds.filter(id => myFriendIds.has(id))
+  const mutualFriendCount = mutualIds.length
+
+  // Fetch mutual friends' profiles for display
+  let mutualFriendProfiles: { id: string; name: string | null; photos: string[] }[] = []
+  if (mutualIds.length > 0) {
+    const { data: mfp } = await supabase
+      .from('profiles')
+      .select('id, name, photos')
+      .in('id', mutualIds)
+    mutualFriendProfiles = mfp ?? []
+  }
 
   return (
     <div className="flex flex-col gap-5 py-2">
@@ -109,11 +120,23 @@ export default async function ViewProfilePage({ params }: { params: Promise<{ us
 
       {/* Mutual friends */}
       {mutualFriendCount > 0 && (
-        <div className="flex justify-center">
-          <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium"
-            style={{ background: 'rgba(155,93,229,0.15)', border: '1px solid rgba(155,93,229,0.3)', color: '#C77DFF' }}>
+        <div className="flex flex-col items-center gap-3">
+          <p className="text-sm font-semibold" style={{ color: '#C77DFF' }}>
             👥 {mutualFriendCount} mutual friend{mutualFriendCount !== 1 ? 's' : ''}
-          </span>
+          </p>
+          <div className="flex flex-wrap justify-center gap-3">
+            {mutualFriendProfiles.map(f => (
+              <div key={f.id} className="flex flex-col items-center gap-1">
+                <div className="w-10 h-10 rounded-full overflow-hidden"
+                  style={{ background: '#13131F', border: '2px solid rgba(155,93,229,0.4)' }}>
+                  {f.photos?.[0]
+                    ? <img src={f.photos[0]} alt="" className="w-full h-full object-cover" />
+                    : <div className="w-full h-full flex items-center justify-center text-sm">👤</div>}
+                </div>
+                <p className="text-xs" style={{ color: '#7B7A96' }}>{f.name?.split(' ')[0]}</p>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>

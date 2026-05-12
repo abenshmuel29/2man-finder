@@ -36,6 +36,7 @@ export default function SearchPage() {
   const [myFriendIds, setMyFriendIds] = useState<string[]>([])
   const [friendFriendIds, setFriendFriendIds] = useState<string[]>([]) // all friends-of-friends IDs
   const [friendsOfFriends, setFriendsOfFriends] = useState<Map<string, string[]>>(new Map()) // profileId → shared friend IDs
+  const [friendProfiles, setFriendProfiles] = useState<Map<string, { name: string | null; photos: string[] }>>(new Map()) // friendId → profile
   const [loading, setLoading] = useState(false)
   const [friendStatus, setFriendStatus] = useState<Record<string, string>>({})
   const [hoodFilter, setHoodFilter] = useState('')
@@ -64,6 +65,17 @@ export default function SearchPage() {
       }
       setFriendStatus(statusMap)
       setMyFriendIds(myFriends)
+
+      // Fetch my friends' profiles (for mutual friend photos)
+      if (myFriends.length > 0) {
+        const { data: friendProfileRows } = await supabase
+          .from('profiles')
+          .select('id, name, photos')
+          .in('id', myFriends)
+        const fpMap = new Map<string, { name: string | null; photos: string[] }>()
+        for (const p of friendProfileRows ?? []) fpMap.set(p.id, { name: p.name, photos: p.photos ?? [] })
+        setFriendProfiles(fpMap)
+      }
 
       // Load friends-of-friends for suggestions + mutual friend counts
       if (myFriends.length > 0 && me?.gender) {
@@ -133,10 +145,15 @@ export default function SearchPage() {
     const shared = friendsOfFriends.get(profileId) ?? []
     const count = shared.length
     if (count === 0) return null
+    const firstFriend = friendProfiles.get(shared[0])
+    const photo = firstFriend?.photos?.[0]
     return (
-      <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-xs font-medium"
+      <span className="inline-flex items-center gap-1.5 mt-1 px-2 py-0.5 rounded-full text-xs font-medium"
         style={{ background: 'rgba(155,93,229,0.15)', border: '1px solid rgba(155,93,229,0.3)', color: '#C77DFF' }}>
-        👥 {count} mutual friend{count !== 1 ? 's' : ''}
+        {photo
+          ? <img src={photo} alt="" className="w-4 h-4 rounded-full object-cover flex-shrink-0" />
+          : <span className="w-4 h-4 rounded-full flex-shrink-0" style={{ background: '#252540' }} />}
+        {count} mutual friend{count !== 1 ? 's' : ''}
       </span>
     )
   }
