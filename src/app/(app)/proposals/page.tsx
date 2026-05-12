@@ -195,14 +195,14 @@ export default function DatesAndFriendsPage() {
 
   return (
     <div className="flex flex-col gap-4 py-2">
-      <h1 className="text-2xl font-bold text-white">Dates & Friends</h1>
+      <h1 className="text-2xl font-bold text-white">2Mans & Friends</h1>
 
       {/* Tabs */}
       <div className="flex rounded-xl overflow-hidden" style={{ border: '1px solid #2D2D50' }}>
         <button onClick={() => setTab('dates')}
           className="flex-1 py-2.5 text-sm font-semibold transition-all"
           style={{ background: tab === 'dates' ? '#8B5CF6' : 'transparent', color: tab === 'dates' ? 'white' : '#6B7280' }}>
-          Dates {datesCount > 0 ? `(${datesCount})` : ''}
+          2Mans {datesCount > 0 ? `(${datesCount})` : ''}
         </button>
         <button onClick={() => setTab('friends')}
           className="flex-1 py-2.5 text-sm font-semibold transition-all relative"

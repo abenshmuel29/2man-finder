@@ -4,6 +4,7 @@ import { NEIGHBORHOODS, BODY_TYPES } from '@/lib/types'
 import Link from 'next/link'
 import { MapPin, Briefcase, GraduationCap } from 'lucide-react'
 import BackButton from '@/components/BackButton'
+import ProfileFriends from '@/components/ProfileFriends'
 
 export default async function ViewProfilePage({ params }: { params: Promise<{ userId: string }> }) {
   const { userId } = await params
@@ -74,6 +75,9 @@ export default async function ViewProfilePage({ params }: { params: Promise<{ us
           {profile.hobbies?.length > 0 && <TagSection label="Hobbies" tags={profile.hobbies} />}
         </div>
       )}
+
+      {/* Friends you may like for a 2Man (only shown to opposite gender) */}
+      <ProfileFriends profileId={userId} profileGender={profile.gender} />
 
       {/* Message button */}
       <Link href={`/messages/${userId}`} className="btn-primary text-center">

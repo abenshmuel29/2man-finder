@@ -9,7 +9,7 @@ import { Compass, Heart, LogOut, User, Search, MessageSquare } from 'lucide-reac
 const links = [
   { href: '/discover', label: 'Discover', icon: Compass, notif: null as null | 'dates' | 'friends' | 'messages' },
   { href: '/search', label: 'Search', icon: Search, notif: null },
-  { href: '/proposals', label: 'Dates', icon: Heart, notif: 'dates' as const },
+  { href: '/proposals', label: '2Mans', icon: Heart, notif: 'dates' as const },
   { href: '/messages', label: 'Messages', icon: MessageSquare, notif: 'messages' as const },
   { href: '/profile', label: 'Profile', icon: User, notif: null },
 ]
