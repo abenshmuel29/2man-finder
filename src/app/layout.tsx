@@ -1,8 +1,9 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { Syne, DM_Sans } from 'next/font/google'
 import './globals.css'
 
-const inter = Inter({ subsets: ['latin'] })
+const syne = Syne({ subsets: ['latin'], weight: ['700', '800'], variable: '--font-syne' })
+const dmSans = DM_Sans({ subsets: ['latin'], weight: ['300', '400', '500', '600'], variable: '--font-dm' })
 
 export const metadata: Metadata = {
   title: '2Man Finder',
@@ -22,7 +23,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="apple-touch-icon" href="/icon-192.png" />
         <meta name="mobile-web-app-capable" content="yes" />
       </head>
-      <body className={`${inter.className} h-full bg-[#0D0D1A] text-white antialiased`}>
+      <body className={`${syne.variable} ${dmSans.variable} h-full antialiased`}
+        style={{ background: '#08080F', color: 'white', fontFamily: 'var(--font-dm), sans-serif' }}>
         {children}
       </body>
     </html>

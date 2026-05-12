@@ -1,73 +1,109 @@
 @import "tailwindcss";
 
 :root {
-  --brand: #8B5CF6;
-  --brand-dark: #6D28D9;
-  --pink: #EC4899;
-  --gold: #F59E0B;
-  --bg: #0D0D1A;
-  --card: #1A1A2E;
-  --card-light: #252540;
-  --border: #2D2D50;
+  --brand-from: #FF4D6D;
+  --brand-to: #9B5DE5;
+  --bg: #08080F;
+  --surface: #0F0F1A;
+  --surface2: #13131F;
+  --border: rgba(255,255,255,0.07);
+  --rose: #FF6B9D;
+  --lavender: #C77DFF;
+  --muted: #7B7A96;
+  --font-syne: 'Syne', sans-serif;
+  --font-dm: 'DM Sans', sans-serif;
 }
 
 * { box-sizing: border-box; }
 
+body {
+  font-family: var(--font-dm);
+  background: var(--bg);
+  color: white;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Typography ─────────────────────────────── */
+h1, h2, h3, .syne {
+  font-family: var(--font-syne);
+}
+
 .gradient-text {
-  background: linear-gradient(135deg, #8B5CF6, #EC4899);
+  background: linear-gradient(135deg, var(--brand-from), var(--brand-to));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
+/* ── Buttons ─────────────────────────────────── */
 .btn-primary {
-  background: linear-gradient(135deg, #8B5CF6, #EC4899);
+  background: linear-gradient(135deg, var(--brand-from), var(--brand-to));
   color: white;
   font-weight: 600;
-  padding: 0.75rem 1.5rem;
-  border-radius: 0.75rem;
-  transition: opacity 0.2s;
+  font-family: var(--font-dm);
+  padding: 0.85rem 1.5rem;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(255,77,109,0.3);
+  transition: opacity 0.2s, transform 0.1s;
   display: block;
   width: 100%;
   text-align: center;
   cursor: pointer;
   border: none;
+  line-height: 1.5;
 }
 .btn-primary:hover { opacity: 0.9; }
-.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-primary:active { transform: scale(0.98); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
 
 .btn-secondary {
-  background: #252540;
+  background: var(--surface2);
   color: white;
   font-weight: 600;
-  padding: 0.75rem 1.5rem;
-  border-radius: 0.75rem;
-  border: 1px solid #2D2D50;
+  font-family: var(--font-dm);
+  padding: 0.85rem 1.5rem;
+  border-radius: 16px;
+  border: 1px solid var(--border);
   transition: background 0.2s;
   display: block;
   width: 100%;
   text-align: center;
   cursor: pointer;
+  line-height: 1.5;
 }
-.btn-secondary:hover { background: #2D2D50; }
+.btn-secondary:hover { background: #1a1a2a; }
 
+/* ── Inputs ──────────────────────────────────── */
 .input-field {
-  background: #252540;
-  border: 1px solid #2D2D50;
-  border-radius: 0.5rem;
-  padding: 0.75rem 1rem;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.8rem 1rem;
   color: white;
   width: 100%;
   outline: none;
   transition: border-color 0.2s;
   font-size: 1rem;
+  font-family: var(--font-dm);
+  line-height: 1.5;
 }
-.input-field:focus { border-color: #8B5CF6; }
-.input-field::placeholder { color: #6B7280; }
-select.input-field option { background: #1A1A2E; }
+.input-field:focus { border-color: var(--brand-to); }
+.input-field::placeholder { color: var(--muted); }
+select.input-field option { background: var(--surface); }
 
+/* ── Cards ───────────────────────────────────── */
 .card {
-  background: #1A1A2E;
-  border: 1px solid #2D2D50;
-  border-radius: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  position: relative;
+  overflow: hidden;
+}
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--brand-from), var(--brand-to));
+  border-radius: 20px 20px 0 0;
 }

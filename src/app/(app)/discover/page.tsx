@@ -112,8 +112,9 @@ export default function DiscoverPage() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-        <div className="w-12 h-12 rounded-full border-2 border-purple-500 border-t-transparent animate-spin" />
-        <p className="text-gray-400">Finding people near you...</p>
+        <div className="w-12 h-12 rounded-full border-2 border-t-transparent animate-spin"
+          style={{ borderColor: 'rgba(255,77,109,0.3)', borderTopColor: '#FF4D6D' }} />
+        <p style={{ color: '#7B7A96' }}>Finding people near you...</p>
       </div>
     )
   }
@@ -122,12 +123,12 @@ export default function DiscoverPage() {
     <div className="flex flex-col gap-4 py-2">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Discover</h1>
-          <p className="text-gray-500 text-sm">Browse {myGender === 'male' ? 'girls' : 'guys'} in Miami</p>
+          <h1 style={{ fontFamily: 'var(--font-syne)', fontWeight: 800, fontSize: 26, lineHeight: 1.3 }}>Discover</h1>
+          <p style={{ color: '#7B7A96', fontSize: 13, lineHeight: 1.5 }}>Browse {myGender === 'male' ? 'girls' : 'guys'} in Miami</p>
         </div>
         <button onClick={() => setShowFilter(f => !f)}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium"
-          style={{ background: showFilter ? '#8B5CF6' : '#252540', border: '1px solid #2D2D50', color: 'white' }}>
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium"
+          style={{ background: showFilter ? 'linear-gradient(135deg,#FF4D6D,#9B5DE5)' : '#13131F', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 100, color: 'white' }}>
           <SlidersHorizontal size={16} /> Filter
         </button>
       </div>
@@ -150,14 +151,16 @@ export default function DiscoverPage() {
         </>
       ) : (
         <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6 text-center">
-          <div className="text-6xl">🔍</div>
+          <div className="card flex items-center justify-center" style={{ width: 88, height: 88, borderRadius: 24 }}>
+            <span style={{ fontSize: 40 }}>✨</span>
+          </div>
           <div>
-            <h2 className="text-xl font-bold text-white mb-2">No more profiles</h2>
-            <p className="text-gray-400 text-sm">
+            <h2 style={{ fontFamily: 'var(--font-syne)', fontWeight: 800, fontSize: 22, lineHeight: 1.3, marginBottom: 8 }}>All caught up!</h2>
+            <p style={{ color: '#7B7A96', fontSize: 14, lineHeight: 1.6 }}>
               {neighborhoodFilter ? 'No one left in this area. Try removing the filter.' : "You've seen everyone for now. Check back later!"}
             </p>
           </div>
-          <button onClick={loadProfiles} className="btn-primary" style={{ width: 'auto', padding: '0.75rem 2rem' }}>
+          <button onClick={loadProfiles} className="btn-primary" style={{ width: 'auto', padding: '0.75rem 2rem', borderRadius: 100 }}>
             Refresh
           </button>
         </div>

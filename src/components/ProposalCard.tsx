@@ -53,7 +53,7 @@ export default function ProposalCard({ proposal, userId }: Props) {
   function Avatar({ profile, label }: { profile: MiniProfile; label: string }) {
     return (
       <Link href={`/profile/${profile.id}`} className="flex flex-col items-center gap-1 flex-1">
-        <div className="w-14 h-14 rounded-full overflow-hidden" style={{ background: '#252540', border: '2px solid #8B5CF6' }}>
+        <div className="w-14 h-14 rounded-full overflow-hidden" style={{ background: '#13131F', border: '2px solid #FF4D6D' }}>
           {profile.photos?.[0]
             ? <img src={profile.photos[0]} alt="" className="w-full h-full object-cover" />
             : <div className="w-full h-full flex items-center justify-center text-xl">👤</div>}
@@ -71,8 +71,8 @@ export default function ProposalCard({ proposal, userId }: Props) {
       <div className="flex items-center gap-2">
         <span className="text-xl">🎉</span>
         <div>
-          <p className="font-bold text-white">2Man Confirmed!</p>
-          <p className="text-xs text-gray-400">Your double date is ready to go</p>
+          <p style={{ fontFamily: 'var(--font-syne)', fontWeight: 800, fontSize: 16, lineHeight: 1.4 }}>2Man Confirmed!</p>
+          <p style={{ color: '#7B7A96', fontSize: 12, lineHeight: 1.5 }}>Your double date is ready to go</p>
         </div>
       </div>
 
@@ -103,19 +103,20 @@ export default function ProposalCard({ proposal, userId }: Props) {
       </div>
 
       {/* Socials unlocked */}
-      <div className="rounded-xl p-4 flex flex-col gap-3" style={{ background: 'linear-gradient(135deg, rgba(139,92,246,0.2), rgba(236,72,153,0.2))', border: '1px solid #8B5CF6' }}>
-        <p className="text-sm font-bold text-white">🔓 Socials Unlocked</p>
+      <div className="flex flex-col gap-3 rounded-xl p-4"
+        style={{ background: 'linear-gradient(135deg, rgba(155,93,229,0.12), rgba(255,77,109,0.08))', border: '1px solid rgba(155,93,229,0.4)' }}>
+        <p style={{ fontFamily: 'var(--font-syne)', fontWeight: 700, fontSize: 15, lineHeight: 1.4 }}>🔓 Socials Unlocked</p>
         {others.map(p => p && (
-          <div key={p.id} className="rounded-lg p-3 flex flex-col gap-1" style={{ background: 'rgba(0,0,0,0.3)' }}>
-            <p className="text-white font-semibold text-sm">{p.name}{p.age ? `, ${p.age}` : ''}</p>
+          <div key={p.id} className="rounded-xl p-3 flex flex-col gap-1" style={{ background: 'rgba(0,0,0,0.25)' }}>
+            <p style={{ fontWeight: 600, fontSize: 14, lineHeight: 1.5 }}>{p.name}{p.age ? `, ${p.age}` : ''}</p>
             {p.snapchat
-              ? <p className="text-sm text-yellow-300">📸 Snap: <span className="font-medium">{p.snapchat}</span></p>
+              ? <p style={{ fontSize: 13, lineHeight: 1.5 }}>📸 Snap: <span style={{ color: '#FF6B9D', fontWeight: 600 }}>{p.snapchat}</span></p>
               : null}
             {p.instagram
-              ? <p className="text-sm text-pink-300">📷 IG: <span className="font-medium">@{p.instagram}</span></p>
+              ? <p style={{ fontSize: 13, lineHeight: 1.5 }}>📷 IG: <span style={{ color: '#FF6B9D', fontWeight: 600 }}>@{p.instagram}</span></p>
               : null}
             {!p.snapchat && !p.instagram && (
-              <p className="text-xs text-gray-500">No socials added</p>
+              <p style={{ color: '#7B7A96', fontSize: 12 }}>No socials added</p>
             )}
           </div>
         ))}
