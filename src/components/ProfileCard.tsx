@@ -118,7 +118,7 @@ export default function ProfileCard({ profile, onNext }: Props) {
           <button onClick={() => handleAction('like')} disabled={loading}
             className="flex-1 flex items-center justify-center gap-2 py-4 rounded-xl font-semibold text-lg transition-all"
             style={{ background: 'linear-gradient(135deg, #8B5CF6, #EC4899)', color: 'white' }}>
-            <Heart size={22} /> Like
+            <Heart size={22} /> 2Man
           </button>
         </div>
       </div>

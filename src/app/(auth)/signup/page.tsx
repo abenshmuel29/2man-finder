@@ -38,7 +38,7 @@ function SignupForm() {
       <div className="w-full max-w-md flex flex-col gap-8">
         <div className="text-center">
           <Link href="/" className="text-3xl font-black gradient-text">2Man Finder</Link>
-          <p className="text-gray-400 mt-2">Join Miami&apos;s double date app</p>
+          <p className="text-gray-400 mt-2">Miami&apos;s double date app</p>
         </div>
 
         <form onSubmit={handleSignup} className="card p-8 flex flex-col gap-5">
@@ -73,7 +73,7 @@ function SignupForm() {
           </button>
 
           <p className="text-xs text-gray-500 text-center">
-            By signing up, you agree to only use this app in Miami, FL.
+            After signing up, add your friends (guys follow guys, girls follow girls). When you and a friend both match with two girls who are also friends, a 2Man is on.
           </p>
         </form>
 

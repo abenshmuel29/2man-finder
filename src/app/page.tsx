@@ -17,13 +17,13 @@ export default function LandingPage() {
 
         {/* Tagline */}
         <div className="flex flex-col gap-2">
-          <p className="text-2xl font-bold text-white">Two guys. Two girls.<br />One unforgettable night.</p>
-          <p className="text-gray-400">Find your perfect double date through your friend group. No randoms — just real connections.</p>
+          <p className="text-2xl font-bold text-white">Two girls. Two guys.<br />A 2Man you will never forget.</p>
+          <p className="text-gray-400">Find your perfect double date through your friends. No randoms — just real connections.</p>
         </div>
 
         {/* Feature pills */}
         <div className="flex flex-wrap justify-center gap-2">
-          {['👥 Friend Groups', '📍 Miami Only', '✅ Verified Connections', '📲 Snap & IG Exchange'].map(f => (
+          {['👫 Friends Only', '📍 Miami Only', '✅ Real Connections', '📲 Snap & IG Exchange'].map(f => (
             <span key={f} className="px-4 py-2 rounded-full text-sm font-medium"
               style={{ background: '#252540', border: '1px solid #2D2D50', color: '#C4B5FD' }}>
               {f}
@@ -35,9 +35,9 @@ export default function LandingPage() {
         <div className="card w-full p-6 text-left flex flex-col gap-4">
           <h3 className="font-bold text-white text-lg">How it works</h3>
           {[
-            ['1', 'Join or create a friend group with your boys/girls'],
-            ['2', 'Browse profiles and like who you find attractive'],
-            ['3', 'When both pairs mutually match, a double date is proposed'],
+            ['1', 'Sign up and add your friends — guys follow guys, girls follow girls'],
+            ['2', 'Browse and hit 2Man on someone you\'re feeling'],
+            ['3', 'When you and a friend each match with two girls who are also friends, a double date is set'],
             ['4', 'Confirm within 24hrs — Snap & IG are exchanged'],
           ].map(([num, text]) => (
             <div key={num} className="flex items-start gap-3">
