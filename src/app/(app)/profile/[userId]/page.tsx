@@ -2,7 +2,8 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { NEIGHBORHOODS, BODY_TYPES } from '@/lib/types'
 import Link from 'next/link'
-import { MapPin, Briefcase, GraduationCap, ArrowLeft } from 'lucide-react'
+import { MapPin, Briefcase, GraduationCap } from 'lucide-react'
+import BackButton from '@/components/BackButton'
 
 export default async function ViewProfilePage({ params }: { params: Promise<{ userId: string }> }) {
   const { userId } = await params
@@ -28,11 +29,7 @@ export default async function ViewProfilePage({ params }: { params: Promise<{ us
 
   return (
     <div className="flex flex-col gap-5 py-2">
-      {/* Back button */}
-      <Link href="javascript:history.back()" className="flex items-center gap-2 text-gray-400 hover:text-white w-fit">
-        <ArrowLeft size={20} />
-        <span className="text-sm">Back</span>
-      </Link>
+      <BackButton />
 
       {/* Photos */}
       {profile.photos?.length > 0 && (

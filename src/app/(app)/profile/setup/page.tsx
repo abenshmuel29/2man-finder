@@ -41,10 +41,34 @@ function ProfileSetupContent() {
   const [uploading, setUploading] = useState(false)
 
   useEffect(() => {
-    createClient().auth.getUser().then(({ data }) => {
-      if (data.user) setUserId(data.user.id)
-      else router.push('/login')
-    })
+    async function init() {
+      const supabase = createClient()
+      const { data } = await supabase.auth.getUser()
+      if (!data.user) { router.push('/login'); return }
+      setUserId(data.user.id)
+
+      // Pre-fill existing profile data for editing
+      const { data: existing } = await supabase.from('profiles').select('*').eq('id', data.user.id).single()
+      if (existing?.profile_complete) {
+        setName(existing.name ?? '')
+        setGender(existing.gender ?? '')
+        setAge(existing.age?.toString() ?? '')
+        setHeight(existing.height ?? '')
+        setWeight(existing.weight ?? '')
+        setBodyType(existing.body_type ?? '')
+        setBio(existing.bio ?? '')
+        setSports(existing.sports ?? [])
+        setInterests(existing.interests ?? [])
+        setHobbies(existing.hobbies ?? [])
+        setSchool(existing.school ?? '')
+        setJob(existing.job ?? '')
+        setSnapchat(existing.snapchat ?? '')
+        setInstagram(existing.instagram ?? '')
+        setNeighborhood(existing.neighborhood ?? '')
+        setPhotos(existing.photos ?? [])
+      }
+    }
+    init()
   }, [router])
 
   function addTag(val: string, list: string[], setList: (v: string[]) => void, setInput: (v: string) => void) {
@@ -86,7 +110,7 @@ function ProfileSetupContent() {
       neighborhood, photos, profile_complete: true, updated_at: new Date().toISOString(),
     })
     if (error) { setError(error.message); setLoading(false) }
-    else router.push(joinGroupId ? `/join/${joinGroupId}` : '/discover')
+    else router.push(joinGroupId ? `/join/${joinGroupId}` : '/profile')
   }
 
   const steps = [

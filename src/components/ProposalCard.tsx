@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { formatDistanceToNow } from 'date-fns'
-import { Clock, CheckCircle, Share2 } from 'lucide-react'
+import { Clock, CheckCircle } from 'lucide-react'
 
 interface MiniProfile {
   id: string
@@ -12,6 +12,8 @@ interface MiniProfile {
   photos: string[]
   neighborhood: string | null
   job: string | null
+  snapchat?: string | null
+  instagram?: string | null
 }
 
 interface Proposal {
@@ -132,18 +134,23 @@ export default function ProposalCard({ proposal, userId, hasConfirmed }: Props) 
       {/* Confirmed: show social media */}
       {isConfirmed && (
         <div className="rounded-xl p-4 flex flex-col gap-3" style={{ background: 'linear-gradient(135deg, rgba(139,92,246,0.2), rgba(236,72,153,0.2))', border: '1px solid #8B5CF6' }}>
-          <p className="text-sm font-semibold text-white">🎉 Connect with your dates!</p>
+          <p className="text-sm font-semibold text-white">🎉 Double Date Confirmed! Here are their socials:</p>
           {[proposal.guy1, proposal.guy2, proposal.girl1, proposal.girl2]
             .filter(p => p.id !== userId)
             .map(p => (
-              <div key={p.id} className="flex items-center gap-2 text-sm">
-                <span className="text-white font-medium">{p.name}:</span>
-                <span className="text-purple-300 flex items-center gap-1">
-                  <Share2 size={13} /> Connect via social
-                </span>
+              <div key={p.id} className="rounded-lg p-3 flex flex-col gap-1" style={{ background: 'rgba(0,0,0,0.3)' }}>
+                <p className="text-white font-semibold text-sm">{p.name}{p.age ? `, ${p.age}` : ''}</p>
+                {p.snapchat ? (
+                  <p className="text-sm text-yellow-300">📸 Snapchat: <span className="font-medium">{p.snapchat}</span></p>
+                ) : null}
+                {p.instagram ? (
+                  <p className="text-sm text-pink-300">📷 Instagram: <span className="font-medium">@{p.instagram}</span></p>
+                ) : null}
+                {!p.snapchat && !p.instagram && (
+                  <p className="text-xs text-gray-500">No socials added yet</p>
+                )}
               </div>
             ))}
-          <p className="text-xs text-gray-400">Snap & Instagram handles were exchanged — check your DMs!</p>
         </div>
       )}
 

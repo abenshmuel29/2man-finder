@@ -96,14 +96,13 @@ export default function DatesAndFriendsPage() {
     if (!user) return
     setUserId(user.id)
 
-    const [proposalsRes, friendsRes, confirmRes, myLikesRes, likesForMeRes] = await Promise.all([
-      supabase.from('double_date_proposals').select(`
-        *,
-        guy1:profiles!double_date_proposals_guy1_id_fkey(id, name, age, photos, neighborhood, job),
-        guy2:profiles!double_date_proposals_guy2_id_fkey(id, name, age, photos, neighborhood, job),
-        girl1:profiles!double_date_proposals_girl1_id_fkey(id, name, age, photos, neighborhood, job),
-        girl2:profiles!double_date_proposals_girl2_id_fkey(id, name, age, photos, neighborhood, job)
-      `).or(`guy1_id.eq.${user.id},guy2_id.eq.${user.id},girl1_id.eq.${user.id},girl2_id.eq.${user.id}`)
+    // Kick off recalculation in background to catch any missed proposals
+    fetch('/api/proposals/recalculate', { method: 'POST' })
+
+    const [rawProposalsRes, friendsRes, confirmRes, myLikesRes, likesForMeRes] = await Promise.all([
+      supabase.from('double_date_proposals')
+        .select('*')
+        .or(`guy1_id.eq.${user.id},guy2_id.eq.${user.id},girl1_id.eq.${user.id},girl2_id.eq.${user.id}`)
         .order('created_at', { ascending: false }),
       fetch('/api/friends').then(r => r.json()),
       supabase.from('proposal_confirmations').select('proposal_id').eq('user_id', user.id),
@@ -111,12 +110,49 @@ export default function DatesAndFriendsPage() {
       supabase.from('interests').select('from_user_id, to_user_id, profiles!interests_from_user_id_fkey(id, name, age, photos, neighborhood, gender, job)').eq('to_user_id', user.id),
     ])
 
-    setProposals(proposalsRes.data ?? [])
+    // Fetch profiles for proposals separately to avoid FK name dependency
+    const rawProposals = rawProposalsRes.data ?? []
+    const profileIds = [...new Set(rawProposals.flatMap((p: any) => [p.guy1_id, p.guy2_id, p.girl1_id, p.girl2_id]))]
+    let profileMap: Record<string, any> = {}
+    if (profileIds.length > 0) {
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('id, name, age, photos, neighborhood, job, snapchat, instagram')
+        .in('id', profileIds)
+      profileMap = Object.fromEntries((profilesData ?? []).map(p => [p.id, p]))
+    }
+    const proposals = rawProposals.map((p: any) => ({
+      ...p,
+      guy1: profileMap[p.guy1_id] ?? null,
+      guy2: profileMap[p.guy2_id] ?? null,
+      girl1: profileMap[p.girl1_id] ?? null,
+      girl2: profileMap[p.girl2_id] ?? null,
+    }))
+
+    setProposals(proposals)
     setFriendships(Array.isArray(friendsRes) ? friendsRes : [])
     setConfirmedIds(new Set(confirmRes.data?.map((c: { proposal_id: string }) => c.proposal_id) ?? []))
     setMyLikes((myLikesRes.data ?? []).map((r: any) => ({ from_user_id: r.from_user_id, to_user_id: r.to_user_id, profile: r.profiles })))
     setLikesForMe((likesForMeRes.data ?? []).map((r: any) => ({ from_user_id: r.from_user_id, to_user_id: r.to_user_id, profile: r.profiles })))
     setLoading(false)
+
+    // After recalculation finishes, reload proposals to catch newly created ones
+    fetch('/api/proposals/recalculate', { method: 'POST' }).then(async r => {
+      const { created } = await r.json().catch(() => ({ created: 0 }))
+      if (created > 0) {
+        // New proposals were created — reload
+        const { data: newRaw } = await supabase.from('double_date_proposals')
+          .select('*')
+          .or(`guy1_id.eq.${user.id},guy2_id.eq.${user.id},girl1_id.eq.${user.id},girl2_id.eq.${user.id}`)
+          .order('created_at', { ascending: false })
+        const newIds = [...new Set((newRaw ?? []).flatMap((p: any) => [p.guy1_id, p.guy2_id, p.girl1_id, p.girl2_id]))]
+        if (newIds.length > 0) {
+          const { data: newProfiles } = await supabase.from('profiles').select('id, name, age, photos, neighborhood, job, snapchat, instagram').in('id', newIds)
+          const newMap = Object.fromEntries((newProfiles ?? []).map(p => [p.id, p]))
+          setProposals((newRaw ?? []).map((p: any) => ({ ...p, guy1: newMap[p.guy1_id], guy2: newMap[p.guy2_id], girl1: newMap[p.girl1_id], girl2: newMap[p.girl2_id] })))
+        }
+      }
+    })
   }, [])
 
   useEffect(() => { load() }, [load])
