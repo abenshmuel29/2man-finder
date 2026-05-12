@@ -28,6 +28,29 @@ export default async function ViewProfilePage({ params }: { params: Promise<{ us
   const bodyTypeLabel = BODY_TYPES.find(b => b.value === profile.body_type)?.label
   const tags = [...(profile.sports ?? []), ...(profile.interests ?? []), ...(profile.hobbies ?? [])]
 
+  // Compute mutual friends
+  const [{ data: myFriendships }, { data: theirFriendships }] = await Promise.all([
+    supabase
+      .from('friendships')
+      .select('requester_id, receiver_id')
+      .or(`requester_id.eq.${user.id},receiver_id.eq.${user.id}`)
+      .eq('status', 'accepted'),
+    supabase
+      .from('friendships')
+      .select('requester_id, receiver_id')
+      .or(`requester_id.eq.${userId},receiver_id.eq.${userId}`)
+      .eq('status', 'accepted'),
+  ])
+  const myFriendIds = new Set(
+    (myFriendships ?? []).map((f: { requester_id: string; receiver_id: string }) =>
+      f.requester_id === user.id ? f.receiver_id : f.requester_id
+    )
+  )
+  const theirFriendIds = (theirFriendships ?? []).map((f: { requester_id: string; receiver_id: string }) =>
+    f.requester_id === userId ? f.receiver_id : f.requester_id
+  )
+  const mutualFriendCount = theirFriendIds.filter(id => myFriendIds.has(id)).length
+
   return (
     <div className="flex flex-col gap-5 py-2">
       <BackButton />
@@ -83,6 +106,16 @@ export default async function ViewProfilePage({ params }: { params: Promise<{ us
       <Link href={`/messages/${userId}`} className="btn-primary text-center">
         Send a Message
       </Link>
+
+      {/* Mutual friends */}
+      {mutualFriendCount > 0 && (
+        <div className="flex justify-center">
+          <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium"
+            style={{ background: 'rgba(155,93,229,0.15)', border: '1px solid rgba(155,93,229,0.3)', color: '#C77DFF' }}>
+            👥 {mutualFriendCount} mutual friend{mutualFriendCount !== 1 ? 's' : ''}
+          </span>
+        </div>
+      )}
     </div>
   )
 }
