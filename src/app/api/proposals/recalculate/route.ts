@@ -79,12 +79,32 @@ export async function POST() {
           const guyFriend = isGuy ? myFriend : theirFriend
           const girlFriend = isGuy ? theirFriend : myFriend
           if (!(await proposalExists(supabase, guyId, guyFriend, girlId, girlFriend))) {
-            const { error } = await supabase.from('double_date_proposals').insert({
+            const { data: newProposal, error } = await supabase.from('double_date_proposals').insert({
               guy1_id: guyId, guy2_id: guyFriend,
               girl1_id: girlId, girl2_id: girlFriend,
               status: 'confirmed',
-            })
-            if (!error) created++
+            }).select('id').single()
+            if (!error && newProposal) {
+              created++
+              // Auto-create group chat for the 4 participants
+              const { data: chat } = await supabase
+                .from('group_chats')
+                .insert({ proposal_id: newProposal.id })
+                .select('id')
+                .single()
+              if (chat) {
+                const members = [guyId, guyFriend, girlId, girlFriend]
+                await supabase.from('group_chat_members').insert(
+                  members.map(uid => ({ chat_id: chat.id, user_id: uid }))
+                )
+                await supabase.from('group_messages').insert({
+                  chat_id: chat.id,
+                  sender_id: null,
+                  content: '🎉 Your 2Man is confirmed! Start planning your date.',
+                  is_system: true,
+                })
+              }
+            }
           }
         }
       }
