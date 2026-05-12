@@ -106,6 +106,19 @@ export default function ProposalCard({ proposal, userId }: Props) {
       <div className="flex flex-col gap-3 rounded-xl p-4"
         style={{ background: 'linear-gradient(135deg, rgba(155,93,229,0.12), rgba(255,77,109,0.08))', border: '1px solid rgba(155,93,229,0.4)' }}>
         <p style={{ fontFamily: 'var(--font-syne)', fontWeight: 700, fontSize: 15, lineHeight: 1.4 }}>🔓 Socials Unlocked</p>
+
+        {/* Personalized action message */}
+        <div className="rounded-xl p-3" style={{ background: 'rgba(255,77,109,0.1)', border: '1px solid rgba(255,77,109,0.25)' }}>
+          <p style={{ fontSize: 13, lineHeight: 1.7, color: '#e8e8f0' }}>
+            Add and text{' '}
+            <span style={{ color: '#FF6B9D', fontWeight: 700 }}>{myDate?.name?.split(' ')[0]}</span>
+            {' '}on Snapchat or Instagram and start planning your 2Man with{' '}
+            <span style={{ color: '#C77DFF', fontWeight: 700 }}>{myFriend?.name?.split(' ')[0]}</span>
+            {' '}and{' '}
+            <span style={{ color: '#C77DFF', fontWeight: 700 }}>{friendsDate?.name?.split(' ')[0]}</span>!
+          </p>
+        </div>
+
         {others.map(p => p && (
           <div key={p.id} className="rounded-xl p-3 flex flex-col gap-1" style={{ background: 'rgba(0,0,0,0.25)' }}>
             <p style={{ fontWeight: 600, fontSize: 14, lineHeight: 1.5 }}>{p.name}{p.age ? `, ${p.age}` : ''}</p>

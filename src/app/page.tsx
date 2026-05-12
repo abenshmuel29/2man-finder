@@ -73,7 +73,7 @@ export default function LandingPage() {
           </Link>
         </div>
 
-        <p style={{ color: '#7B7A96', fontSize: 12, lineHeight: 1.5 }}>Currently only available in Miami, FL</p>
+        <p style={{ color: '#7B7A96', fontSize: 12, lineHeight: 1.5 }}>Currently only available in Miami, FL · Must be 18+</p>
       </div>
     </div>
   )
