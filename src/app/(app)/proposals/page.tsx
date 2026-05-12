@@ -38,32 +38,34 @@ function MiniCard({ profile, status, onAction }: {
   status: 'waiting' | 'matched' | 'incoming'
   onAction?: (action: '2man' | 'pass') => void
 }) {
-  return (
-    <div className="card p-3 flex items-center gap-3">
-      <Link href={`/profile/${profile.id}`} className="flex items-center gap-3 flex-1 min-w-0">
-        <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0" style={{ background: '#252540' }}>
-          {profile.photos?.[0]
-            ? <img src={profile.photos[0]} alt="" className="w-full h-full object-cover" />
-            : <div className="w-full h-full flex items-center justify-center text-xl">
-                {profile.gender === 'male' ? '👨' : '👩'}
-              </div>}
-        </div>
-        <div className="min-w-0">
-          <p className="font-semibold text-white text-sm">{profile.name}{profile.age ? `, ${profile.age}` : ''}</p>
-          {profile.neighborhood && <p className="text-xs text-gray-500">{profile.neighborhood}</p>}
-        </div>
-      </Link>
-      <div className="flex-shrink-0">
-        {status === 'waiting' && (
-          <span className="text-xs text-gray-400">Waiting for response...</span>
-        )}
-        {status === 'matched' && (
-          <span className="flex items-center gap-1 text-xs font-semibold text-pink-400">
-            ❤️ Matched!
-          </span>
-        )}
-        {status === 'incoming' && onAction && (
-          <div className="flex gap-2">
+  const avatar = (
+    <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0" style={{ background: '#252540' }}>
+      {profile.photos?.[0]
+        ? <img src={profile.photos[0]} alt="" className="w-full h-full object-cover" />
+        : <div className="w-full h-full flex items-center justify-center text-xl">
+            {profile.gender === 'male' ? '👨' : '👩'}
+          </div>}
+    </div>
+  )
+
+  const nameBlock = (
+    <div className="min-w-0 flex-1">
+      <p className="font-semibold text-white text-sm">{profile.name}{profile.age ? `, ${profile.age}` : ''}</p>
+      {profile.neighborhood && <p className="text-xs text-gray-500">{profile.neighborhood}</p>}
+    </div>
+  )
+
+  // For incoming requests the action buttons live outside the link,
+  // so we keep the old split layout.
+  if (status === 'incoming') {
+    return (
+      <div className="card p-3 flex items-center gap-3">
+        <Link href={`/profile/${profile.id}`} className="flex items-center gap-3 flex-1 min-w-0">
+          {avatar}
+          {nameBlock}
+        </Link>
+        {onAction && (
+          <div className="flex gap-2 flex-shrink-0">
             <button onClick={() => onAction('2man')}
               className="px-3 py-1.5 rounded-lg text-xs font-semibold"
               style={{ background: 'linear-gradient(135deg, #8B5CF6, #EC4899)', color: 'white' }}>
@@ -77,7 +79,29 @@ function MiniCard({ profile, status, onAction }: {
           </div>
         )}
       </div>
-    </div>
+    )
+  }
+
+  // For matched / waiting: the ENTIRE card is a tappable link to the profile
+  return (
+    <Link
+      href={`/profile/${profile.id}`}
+      className="card p-3 flex items-center gap-3 cursor-pointer transition-opacity active:opacity-70"
+      style={{ WebkitTapHighlightColor: 'transparent' }}
+    >
+      {avatar}
+      {nameBlock}
+      <div className="flex-shrink-0">
+        {status === 'matched' && (
+          <span className="flex items-center gap-1 text-xs font-semibold text-pink-400">
+            ❤️ Matched!
+          </span>
+        )}
+        {status === 'waiting' && (
+          <span className="text-xs text-gray-400">Waiting...</span>
+        )}
+      </div>
+    </Link>
   )
 }
 

@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import AddToHomeScreen from '@/components/AddToHomeScreen'
 
 export default function LandingPage() {
   return (
@@ -72,6 +73,9 @@ export default function LandingPage() {
             Already have an account? Sign in
           </Link>
         </div>
+
+        {/* Add to Home Screen banner (mobile only, hides when installed) */}
+        <AddToHomeScreen />
 
         <p style={{ color: '#7B7A96', fontSize: 12, lineHeight: 1.5 }}>Currently only available in Miami, FL · Must be 18+</p>
       </div>
